@@ -89,19 +89,20 @@ export default function TopProducts() {
   const getCardWidth = () => {
     if (typeof window === 'undefined') return '100%';
     
-    const containerPadding = window.innerWidth < 640 ? 64 : window.innerWidth < 1200 ? 96 : 160;
-    const gap = window.innerWidth < 640 ? 16 : 24; // gap-4 or gap-6
+    // More conservative padding calculation for mobile
+    const containerPadding = window.innerWidth < 640 ? 80 : window.innerWidth < 1200 ? 96 : 160;
+    const gap = window.innerWidth < 640 ? 12 : 24; // Smaller gap on mobile
     const availableWidth = window.innerWidth - containerPadding;
     const totalGaps = (itemsToShow - 1) * gap;
     const cardWidth = (availableWidth - totalGaps) / itemsToShow;
     
-    // Set minimum and maximum card widths for better consistency
+    // More restrictive max widths to ensure cards fit
     let minWidth, maxWidth;
     
     if (window.innerWidth < 640) {
-      // Mobile
-      minWidth = 280;
-      maxWidth = 350;
+      // Mobile - ensure it fits within screen
+      minWidth = 260;
+      maxWidth = Math.min(320, window.innerWidth - 80); // Never exceed screen minus padding
     } else if (window.innerWidth < 1200) {
       // Tablet and medium screens
       minWidth = 220;
@@ -119,7 +120,7 @@ export default function TopProducts() {
   const scrollFirstRowNext = () => {
     if (firstRowCarouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24;
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       firstRowCarouselRef.current.scrollBy({
@@ -132,7 +133,7 @@ export default function TopProducts() {
   const scrollFirstRowPrev = () => {
     if (firstRowCarouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24;
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       firstRowCarouselRef.current.scrollBy({
@@ -146,7 +147,7 @@ export default function TopProducts() {
   const scrollSecondRowNext = () => {
     if (secondRowCarouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24;
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       secondRowCarouselRef.current.scrollBy({
@@ -159,7 +160,7 @@ export default function TopProducts() {
   const scrollSecondRowPrev = () => {
     if (secondRowCarouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24;
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       secondRowCarouselRef.current.scrollBy({
@@ -302,11 +303,20 @@ export default function TopProducts() {
     return (
       <div 
         key={product._id} 
-        className="flex-shrink-0 snap-start bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group h-[380px] sm:h-[400px] lg:h-[420px] flex flex-col"
-        style={{ width: `${cardWidth}px` }}
+        className="flex-shrink-0 snap-start bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group flex flex-col"
+        style={{ 
+          width: `${cardWidth}px`,
+          height: 'auto',
+          minHeight: '320px'
+        }}
         onClick={() => router.push(`/products/${product._id}`)}
       >
-        <div className="h-48 sm:h-52 lg:h-56 bg-gray-100 relative cursor-pointer overflow-hidden">
+        <div className="relative cursor-pointer overflow-hidden bg-gray-100" 
+             style={{ 
+               height: window.innerWidth < 640 ? '160px' : 
+                      window.innerWidth < 768 ? '180px' : 
+                      window.innerWidth < 1024 ? '200px' : '220px'
+             }}>
           <img 
             src={product.mainImage || "/placeholder.svg"} 
             alt={product.name}
@@ -319,31 +329,31 @@ export default function TopProducts() {
           />
           
           {product.discount > 0 && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-md">
+            <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md">
               -{product.discount}%
             </div>
           )}
           
           <button 
             onClick={(e) => toggleFavorite(product._id, e)}
-            className="absolute top-2 right-2 p-1.5 sm:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            className="absolute top-1 right-1 sm:top-2 sm:right-2 p-1 sm:p-1.5 lg:p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
           >
             <Heart 
-              size={16} 
+              size={window.innerWidth < 640 ? 14 : 16} 
               className={favorites.includes(product._id) ? "text-red-500" : "text-gray-400"} 
               fill={favorites.includes(product._id) ? "currentColor" : "none"} 
             />
           </button>
         </div>
         
-        <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+        <div className="p-2 sm:p-3 lg:p-4 flex-1 flex flex-col justify-between">
           <div>
-            <div className="flex items-center mb-2">
+            <div className="flex items-center mb-1 sm:mb-2">
               <div className="flex text-yellow-400">
                 {[...Array(5)].map((_, i) => (
                   <Star 
                     key={i} 
-                    size={14} 
+                    size={window.innerWidth < 640 ? 12 : 14} 
                     fill={i < Math.floor(product.ratings || 0) ? "currentColor" : "none"} 
                     stroke="currentColor" 
                   />
@@ -352,31 +362,32 @@ export default function TopProducts() {
               <span className="text-xs text-gray-500 ml-1">({product.numReviews || 0})</span>
             </div>
             
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 truncate">{product.name}</h3>
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 mb-1 truncate">{product.name}</h3>
             
-            <div className="flex items-center mb-3">
-              <span className="text-lg sm:text-xl font-bold text-gray-900">₹{product.price?.toLocaleString() || 0}</span>
+            <div className="flex items-center mb-2 sm:mb-3">
+              <span className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">₹{product.price?.toLocaleString() || 0}</span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-sm text-gray-500 line-through ml-2">₹{product.originalPrice.toLocaleString()}</span>
+                <span className="text-xs sm:text-sm text-gray-500 line-through ml-1 sm:ml-2">₹{product.originalPrice.toLocaleString()}</span>
               )}
             </div>
           </div>
           
-          <div className="flex space-x-2 mt-auto">
+          <div className="flex space-x-1 sm:space-x-2 mt-auto">
             <button 
               onClick={(e) => handleAddToCart(product._id, e)}
-              className="flex-1 text-xs sm:text-sm py-2 px-2 rounded-md flex items-center justify-center bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+              className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2 px-1 sm:px-2 rounded-md flex items-center justify-center bg-teal-600 text-white hover:bg-teal-700 transition-colors"
             >
-              <ShoppingCart size={14} className="mr-1" />
-              <span className="hidden sm:inline">Cart</span>
-              <span className="sm:hidden">Add</span>
+              <ShoppingCart size={window.innerWidth < 640 ? 12 : 14} className="mr-0.5 sm:mr-1" />
+              <span className="hidden xs:inline sm:hidden lg:inline">Cart</span>
+              <span className="xs:hidden sm:inline lg:hidden">Add</span>
+              <span className="inline xs:hidden">+</span>
             </button>
             
             <button 
               onClick={(e) => handleBuyNow(product._id, e)}
-              className="flex-1 text-xs sm:text-sm py-2 px-2 rounded-md flex items-center justify-center bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+              className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2 px-1 sm:px-2 rounded-md flex items-center justify-center bg-orange-500 text-white hover:bg-orange-600 transition-colors"
             >
-              <CreditCard size={14} className="mr-1" />
+              <CreditCard size={window.innerWidth < 640 ? 12 : 14} className="mr-0.5 sm:mr-1" />
               Buy
             </button>
           </div>
@@ -387,15 +398,15 @@ export default function TopProducts() {
 
   if (isLoading) {
     return (
-      <div className="py-8 flex justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-teal-500"></div>
+      <div className="py-6 sm:py-8 flex justify-center">
+        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12 border-t-2 border-b-2 border-teal-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="py-8 flex justify-center px-4">
+      <div className="py-6 sm:py-8 flex justify-center px-4">
         <p className="text-red-500 text-center text-sm sm:text-base">{error}</p>
       </div>
     );
@@ -409,41 +420,41 @@ export default function TopProducts() {
   const secondRowProducts = getSecondRowProducts();
 
   return (
-    <div className="py-4 sm:py-6 md:py-10 bg-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl lg:max-w-[1580px]">
+    <div className="py-3 sm:py-4 md:py-6 lg:py-10 bg-white">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 max-w-full sm:max-w-6xl lg:max-w-[1580px]">
         {/* Title at the top */}
-        <div className="mb-6 sm:mb-8 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+        <div className="mb-4 sm:mb-6 lg:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
             Best <span className="text-teal-600">Seller</span>
           </h2>
         </div>
 
         {/* First Row (Products 1-10) */}
         {firstRowProducts.length > 0 && (
-          <div className="mb-6 sm:mb-8 md:mb-12">
+          <div className="mb-4 sm:mb-6 md:mb-8 lg:mb-12">
             {/* First row with navigation arrows on sides */}
             <div className="relative">
               {/* Left arrow */}
               <button 
                 onClick={scrollFirstRowPrev}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -ml-6 lg:-ml-12"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-1.5 sm:p-2 lg:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -ml-4 sm:-ml-6 lg:-ml-12"
               >
-                <ChevronLeft size={20} className="md:w-6 md:h-6" />
+                <ChevronLeft size={window.innerWidth < 640 ? 16 : window.innerWidth < 1024 ? 18 : 20} className="md:w-6 md:h-6" />
               </button>
               
               {/* Right arrow */}
               <button 
                 onClick={scrollFirstRowNext}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -mr-6 lg:-mr-12"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-1.5 sm:p-2 lg:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -mr-4 sm:-mr-6 lg:-mr-12"
               >
-                <ChevronRight size={20} className="md:w-6 md:h-6" />
+                <ChevronRight size={window.innerWidth < 640 ? 16 : window.innerWidth < 1024 ? 18 : 20} className="md:w-6 md:h-6" />
               </button>
               
               {/* Products container with adjusted width */}
-              <div className="mx-8 lg:mx-16">
+              <div className="mx-6 sm:mx-8 lg:mx-16">
                 <div 
                   ref={firstRowCarouselRef}
-                  className="flex overflow-x-auto gap-4 lg:gap-8 pb-4 hide-scrollbar snap-x snap-mandatory"
+                  className="flex overflow-x-auto gap-3 sm:gap-4 lg:gap-8 pb-3 sm:pb-4 hide-scrollbar snap-x snap-mandatory"
                 >
                   {firstRowProducts.map((product) => (
                     <ProductCard key={product._id} product={product} />
@@ -462,24 +473,24 @@ export default function TopProducts() {
               {/* Left arrow */}
               <button 
                 onClick={scrollSecondRowPrev}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -ml-6 lg:-ml-12"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-1.5 sm:p-2 lg:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -ml-4 sm:-ml-6 lg:-ml-12"
               >
-                <ChevronLeft size={20} className="md:w-6 md:h-6" />
+                <ChevronLeft size={window.innerWidth < 640 ? 16 : window.innerWidth < 1024 ? 18 : 20} className="md:w-6 md:h-6" />
               </button>
               
               {/* Right arrow */}
               <button 
                 onClick={scrollSecondRowNext}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -mr-6 lg:-mr-12"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-1.5 sm:p-2 lg:p-3 rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-teal-600 transition-all duration-300 -mr-4 sm:-mr-6 lg:-mr-12"
               >
-                <ChevronRight size={20} className="md:w-6 md:h-6" />
+                <ChevronRight size={window.innerWidth < 640 ? 16 : window.innerWidth < 1024 ? 18 : 20} className="md:w-6 md:h-6" />
               </button>
               
               {/* Products container with adjusted width */}
-              <div className="mx-8 lg:mx-16">
+              <div className="mx-6 sm:mx-8 lg:mx-16">
                 <div 
                   ref={secondRowCarouselRef}
-                  className="flex overflow-x-auto gap-4 lg:gap-8 pb-4 hide-scrollbar snap-x snap-mandatory"
+                  className="flex overflow-x-auto gap-3 sm:gap-4 lg:gap-8 pb-3 sm:pb-4 hide-scrollbar snap-x snap-mandatory"
                 >
                   {secondRowProducts.map((product) => (
                     <ProductCard key={product._id} product={product} />
@@ -528,6 +539,16 @@ export default function TopProducts() {
         
         .animate-fade-out {
           animation: fade-out 0.3s ease-out;
+        }
+
+        /* Extra small devices breakpoint */
+        @media (min-width: 480px) {
+          .xs\:inline {
+            display: inline !important;
+          }
+          .xs\:hidden {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
