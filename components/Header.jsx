@@ -277,8 +277,8 @@ export default function Header() {
               {/* Cart button - always visible in mobile */}
               <Link href="/cart" 
                 onClick={(e) => {
-                  closeMenu();
                   handleCartClick(e);
+                  closeMenu();
                 }}
                 className="w-full max-w-xs bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-full text-center transition-all duration-300 font-medium shadow-md flex items-center justify-center"
               >
