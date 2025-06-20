@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CreditCard, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const redirectTimeoutRef = useRef(null);
+  
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,7 +40,19 @@ export default function CheckoutPage() {
     fetchCart();
     
     return () => {
-      document.body.removeChild(script);
+      // Safe script cleanup
+      try {
+        if (script && document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      } catch (error) {
+        // Silent fail for cleanup
+      }
+      
+      // Clear any pending redirects
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -46,13 +60,15 @@ export default function CheckoutPage() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/cart');
-      const data = await response.json();
-
+      
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to fetch cart');
       }
+      
+      const data = await response.json();
 
-      if (!data.cart || data.cart.items.length === 0) {
+      if (!data.cart || !data.cart.items || data.cart.items.length === 0) {
         router.push('/cart');
         return;
       }
@@ -83,20 +99,20 @@ export default function CheckoutPage() {
   const validateForm = () => {
     const requiredFields = ['name', 'address', 'city', 'state', 'postalCode', 'phone'];
     for (const field of requiredFields) {
-      if (!shippingAddress[field]) {
+      if (!shippingAddress[field] || !shippingAddress[field].trim()) {
         setError(`Please enter your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
     
     // Phone validation
-    if (!/^\d{10}$/.test(shippingAddress.phone)) {
+    if (!/^\d{10}$/.test(shippingAddress.phone.replace(/\s/g, ''))) {
       setError('Please enter a valid 10-digit phone number');
       return false;
     }
     
     // Postal code validation for India
-    if (!/^\d{6}$/.test(shippingAddress.postalCode)) {
+    if (!/^\d{6}$/.test(shippingAddress.postalCode.replace(/\s/g, ''))) {
       setError('Please enter a valid 6-digit postal code');
       return false;
     }
@@ -127,15 +143,21 @@ export default function CheckoutPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         // Handle availability issues if any
         if (data.availabilityIssues) {
           setAvailabilityIssues(data.availabilityIssues);
           throw new Error('Some products in your cart are no longer available in the requested quantity');
         }
         throw new Error(data.error || 'Failed to create order');
+      }
+
+      const data = await response.json();
+
+      // Check if Razorpay is loaded
+      if (!window.Razorpay) {
+        throw new Error('Payment system not loaded. Please refresh and try again.');
       }
 
       // Initialize Razorpay
@@ -195,16 +217,17 @@ export default function CheckoutPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Payment verification failed');
       }
+
+      const data = await response.json();
 
       // Payment was successful
       setSuccess(true);
       // Clear cart and show success message
-      setTimeout(() => {
+      redirectTimeoutRef.current = setTimeout(() => {
         router.push('/payment-success'); // Redirect to success page
       }, 3000);
 
@@ -392,28 +415,28 @@ export default function CheckoutPage() {
             <div className="p-6">
               {/* Cart Items */}
               <div className="mb-6 space-y-4">
-                {cart && cart.items.map((item) => (
+                {cart && cart.items && cart.items.map((item) => (
                   <div key={item.product?._id} className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden mr-3">
                         <img 
                           src={item.product?.mainImage || "/placeholder.svg"} 
-                          alt={item.product?.name} 
+                          alt={item.product?.name || "Product"} 
                           className="h-full w-full object-cover"
                         />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-800">{item.product?.name}</h3>
-                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                        <h3 className="text-sm font-medium text-gray-800">{item.product?.name || "Unknown Product"}</h3>
+                        <p className="text-xs text-gray-500">Qty: {item.quantity || 0}</p>
                         {item.hasStockIssue && (
                           <p className="text-xs text-red-500 font-medium">
-                            Only {item.availableQuantity} available
+                            Only {item.availableQuantity || 0} available
                           </p>
                         )}
                       </div>
                     </div>
                     <div className="text-sm font-medium">
-                      ₹{((item.product?.price || 0) * item.quantity).toLocaleString()}
+                      ₹{((item.product?.price || 0) * (item.quantity || 0)).toLocaleString()}
                     </div>
                   </div>
                 ))}
@@ -423,7 +446,7 @@ export default function CheckoutPage() {
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">₹{cart?.totalPrice.toLocaleString()}</span>
+                  <span className="font-medium">₹{(cart?.totalPrice || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
@@ -435,7 +458,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 text-lg font-bold">
                   <span>Total</span>
-                  <span>₹{cart?.totalPrice.toLocaleString()}</span>
+                  <span>₹{(cart?.totalPrice || 0).toLocaleString()}</span>
                 </div>
               </div>
               
