@@ -116,10 +116,11 @@ export default function RevenueAnalyticsPage() {
   const RevenueChart = ({ data, type }) => {
     if (!data || data.length === 0) {
       return (
-        <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="h-48 sm:h-56 lg:h-64 flex items-center justify-center text-gray-500">
           <div className="text-center">
-            <Activity size={48} className="mx-auto mb-4 text-gray-300" />
-            <p>No data available</p>
+            <Activity size={32} className="mx-auto mb-3 sm:mb-4 text-gray-300 sm:hidden" />
+            <Activity size={48} className="mx-auto mb-3 sm:mb-4 text-gray-300 hidden sm:block" />
+            <p className="text-sm sm:text-base">No data available</p>
           </div>
         </div>
       )
@@ -133,7 +134,7 @@ export default function RevenueAnalyticsPage() {
     }))
 
     return (
-      <div className="h-64 w-full">
+      <div className="h-48 sm:h-56 lg:h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -178,10 +179,32 @@ export default function RevenueAnalyticsPage() {
     let cumulativePercentage = 0
 
     return (
-      <div className="flex items-center justify-center">
-        <div className="relative w-40 h-40">
-          <svg className="w-40 h-40 transform -rotate-90">
-            <circle cx="80" cy="80" r="60" fill="none" stroke="#F3F4F6" strokeWidth="20" />
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6">
+        <div className="relative w-32 h-32 sm:w-40 sm:h-40">
+          <svg className="w-32 h-32 sm:w-40 sm:h-40 transform -rotate-90">
+            <circle cx="64" cy="64" r="48" fill="none" stroke="#F3F4F6" strokeWidth="16" className="sm:hidden" />
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#F3F4F6" strokeWidth="20" className="hidden sm:block" />
+            {data.slice(0, 6).map((item, index) => {
+              const percentage = (item.revenue / total) * 100
+              const strokeDasharray = `${percentage * 3.77} 377`
+              const strokeDashoffset = -cumulativePercentage * 3.77
+              cumulativePercentage += percentage
+
+              return (
+                <circle
+                  key={index}
+                  cx="64"
+                  cy="64"
+                  r="48"
+                  fill="none"
+                  stroke={colors[index]}
+                  strokeWidth="16"
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-300 hover:stroke-opacity-80 sm:hidden"
+                />
+              )
+            })}
             {data.slice(0, 6).map((item, index) => {
               const percentage = (item.revenue / total) * 100
               const strokeDasharray = `${percentage * 3.77} 377`
@@ -199,24 +222,24 @@ export default function RevenueAnalyticsPage() {
                   strokeWidth="20"
                   strokeDasharray={strokeDasharray}
                   strokeDashoffset={strokeDashoffset}
-                  className="transition-all duration-300 hover:stroke-opacity-80"
+                  className="transition-all duration-300 hover:stroke-opacity-80 hidden sm:block"
                 />
               )
             })}
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-sm font-semibold text-gray-900">{formatCurrency(total)}</div>
+              <div className="text-xs sm:text-sm font-semibold text-gray-900">{formatCurrency(total)}</div>
               <div className="text-xs text-gray-500">Total</div>
             </div>
           </div>
         </div>
-        <div className="ml-6 space-y-2">
+        <div className="space-y-1 sm:space-y-2">
           {data.slice(0, 6).map((item, index) => (
             <div key={index} className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: colors[index] }}></div>
-              <div className="text-sm">
-                <div className="font-medium text-gray-900">{item._id}</div>
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full mr-2" style={{ backgroundColor: colors[index] }}></div>
+              <div className="text-xs sm:text-sm">
+                <div className="font-medium text-gray-900 truncate max-w-24 sm:max-w-32">{item._id}</div>
                 <div className="text-gray-500">{formatCurrency(item.revenue)}</div>
               </div>
             </div>
@@ -228,19 +251,20 @@ export default function RevenueAnalyticsPage() {
 
   const MetricCard = ({ title, value, change, icon: Icon, color, subtext }) => (
     <div
-      className={`bg-gradient-to-br ${color} p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 text-white overflow-hidden relative`}
+      className={`bg-gradient-to-br ${color} p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 text-white overflow-hidden relative`}
     >
       <div className="absolute top-0 right-0 opacity-10">
-        <Icon size={80} />
+        <Icon size={60} className="sm:hidden" />
+        <Icon size={80} className="hidden sm:block" />
       </div>
       <div className="relative z-10">
-        <p className="text-white opacity-80 text-sm font-medium mb-1">{title}</p>
-        <p className="text-3xl font-bold mb-1">{value}</p>
-        {subtext && <p className="text-white opacity-70 text-sm">{subtext}</p>}
+        <p className="text-white opacity-80 text-xs sm:text-sm font-medium mb-1">{title}</p>
+        <p className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 break-words">{value}</p>
+        {subtext && <p className="text-white opacity-70 text-xs sm:text-sm">{subtext}</p>}
         {change !== undefined && (
-          <div className="flex-items-center mt-2 text-black bg-white bg-opacity-20 rounded-full px-3 py-1 inline-block">
+          <div className="flex-items-center mt-2 text-black bg-white bg-opacity-20 rounded-full px-2 sm:px-3 py-1 inline-block">
             {getGrowthIcon(change)}
-            <span className="text-sm ml-1 font-medium">{Math.abs(change)}% vs last period</span>
+            <span className="text-xs sm:text-sm ml-1 font-medium">{Math.abs(change)}% vs last period</span>
           </div>
         )}
       </div>
@@ -289,11 +313,11 @@ export default function RevenueAnalyticsPage() {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50">
         <AdminNavbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="flex flex-col items-center bg-white p-8 rounded-xl shadow-md">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500 mb-4"></div>
-            <p className="text-teal-700 font-medium">Loading analytics dashboard...</p>
-            <p className="text-gray-500 text-sm mt-2">This may take a moment</p>
+        <div className="flex-grow flex items-center justify-center px-4">
+          <div className="flex flex-col items-center bg-white p-6 sm:p-8 rounded-xl shadow-md max-w-sm w-full">
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-2 border-b-2 border-teal-500 mb-4"></div>
+            <p className="text-teal-700 font-medium text-sm sm:text-base">Loading analytics dashboard...</p>
+            <p className="text-gray-500 text-xs sm:text-sm mt-2 text-center">This may take a moment</p>
           </div>
         </div>
       </div>
@@ -304,24 +328,24 @@ export default function RevenueAnalyticsPage() {
     <div className="flex flex-col min-h-screen bg-gray-100">
       <AdminNavbar />
 
-      <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
+      <main className="flex-grow py-4 sm:py-6 lg:py-8">
+        <div className="container mx-auto px-2 sm:px-4">
           {/* Header */}
-          <div className="mb-8 bg-white rounded-xl shadow-sm p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between">
+          <div className="mb-4 sm:mb-6 lg:mb-8 bg-white rounded-xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Revenue Analytics</h1>
-                <p className="text-gray-600">Comprehensive insights into your business performance</p>
-                <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-teal-100 text-teal-800 text-sm">
-                  <Calendar size={14} className="mr-1" />
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Revenue Analytics</h1>
+                <p className="text-gray-600 text-sm sm:text-base">Comprehensive insights into your business performance</p>
+                <div className="mt-2 inline-flex items-center px-2 sm:px-3 py-1 rounded-full bg-teal-100 text-teal-800 text-xs sm:text-sm">
+                  <Calendar size={12} className="mr-1" />
                   {getTimeRangeLabel()}
                 </div>
               </div>
-              <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white shadow-sm"
+                  className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white shadow-sm text-sm sm:text-base"
                 >
                   <option value="7days">Last 7 Days</option>
                   <option value="30days">Last 30 Days</option>
@@ -331,17 +355,17 @@ export default function RevenueAnalyticsPage() {
                 </select>
                 <button
                   onClick={exportData}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors shadow-sm"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-colors shadow-sm text-sm sm:text-base"
                 >
-                  <Download size={18} className="mr-2" />
+                  <Download size={16} className="mr-2" />
                   Export
                 </button>
                 <button
                   onClick={fetchAnalytics}
                   disabled={isRefreshing}
-                  className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors disabled:opacity-70 shadow-sm"
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center transition-colors disabled:opacity-70 shadow-sm text-sm sm:text-base"
                 >
-                  <RefreshCw size={18} className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <RefreshCw size={16} className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
                   {isRefreshing ? "Refreshing..." : "Refresh"}
                 </button>
               </div>
@@ -349,11 +373,11 @@ export default function RevenueAnalyticsPage() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
               <div className="flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
+                  className="h-4 w-4 sm:h-5 sm:w-5 mr-2"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -363,13 +387,13 @@ export default function RevenueAnalyticsPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                {error}
+                <span className="text-sm sm:text-base">{error}</span>
               </div>
             </div>
           )}
 
           {/* Revenue Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             <MetricCard
               title="Today's Revenue"
               value={formatCurrency(analyticsData.summary.today.revenue)}
@@ -404,13 +428,13 @@ export default function RevenueAnalyticsPage() {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {/* Revenue Trend Chart */}
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Revenue Trend</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {timeRange === "7days" || timeRange === "30days"
                       ? "Daily"
                       : timeRange === "90days"
@@ -419,22 +443,24 @@ export default function RevenueAnalyticsPage() {
                     revenue
                   </p>
                 </div>
-                <div className="p-2 bg-teal-50 rounded-full">
-                  <Activity size={20} className="text-teal-600" />
+                <div className="p-1.5 sm:p-2 bg-teal-50 rounded-full">
+                  <Activity size={16} className="text-teal-600 sm:hidden" />
+                  <Activity size={20} className="text-teal-600 hidden sm:block" />
                 </div>
               </div>
               <RevenueChart data={analyticsData.dailyRevenue} type="daily" />
             </div>
 
             {/* Category Revenue Distribution */}
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Revenue by Category</h3>
-                  <p className="text-sm text-gray-500">Distribution across product categories</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Revenue by Category</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">Distribution across product categories</p>
                 </div>
-                <div className="p-2 bg-blue-50 rounded-full">
-                  <PieChart size={20} className="text-blue-600" />
+                <div className="p-1.5 sm:p-2 bg-blue-50 rounded-full">
+                  <PieChart size={16} className="text-blue-600 sm:hidden" />
+                  <PieChart size={20} className="text-blue-600 hidden sm:block" />
                 </div>
               </div>
               <CategoryDonutChart data={analyticsData.categoryRevenue} />
@@ -442,87 +468,89 @@ export default function RevenueAnalyticsPage() {
           </div>
 
           {/* Growth Metrics */}
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-8">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 sm:mb-6 lg:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Growth Metrics</h3>
-                <p className="text-sm text-gray-500">Performance compared to previous period</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Growth Metrics</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Performance compared to previous period</p>
               </div>
-              <div className="p-2 bg-purple-50 rounded-full">
-                <TrendingUp size={20} className="text-purple-600" />
+              <div className="p-1.5 sm:p-2 bg-purple-50 rounded-full">
+                <TrendingUp size={16} className="text-purple-600 sm:hidden" />
+                <TrendingUp size={20} className="text-purple-600 hidden sm:block" />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className={`text-3xl font-bold ${getGrowthColor(analyticsData.growth.revenue)} mb-2`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className={`text-2xl sm:text-3xl font-bold ${getGrowthColor(analyticsData.growth.revenue)} mb-2`}>
                   {analyticsData.growth.revenue >= 0 ? "+" : ""}
                   {analyticsData.growth.revenue}%
                 </div>
-                <div className="text-gray-600 font-medium">Revenue Growth</div>
+                <div className="text-gray-600 font-medium text-sm sm:text-base">Revenue Growth</div>
                 <div className="flex items-center justify-center mt-2">
                   {getGrowthIcon(analyticsData.growth.revenue)}
-                  <span className="text-sm text-gray-500 ml-1">vs previous period</span>
+                  <span className="text-xs sm:text-sm text-gray-500 ml-1">vs previous period</span>
                 </div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className={`text-3xl font-bold ${getGrowthColor(analyticsData.growth.orders)} mb-2`}>
+              <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className={`text-2xl sm:text-3xl font-bold ${getGrowthColor(analyticsData.growth.orders)} mb-2`}>
                   {analyticsData.growth.orders >= 0 ? "+" : ""}
                   {analyticsData.growth.orders}%
                 </div>
-                <div className="text-gray-600 font-medium">Orders Growth</div>
+                <div className="text-gray-600 font-medium text-sm sm:text-base">Orders Growth</div>
                 <div className="flex items-center justify-center mt-2">
                   {getGrowthIcon(analyticsData.growth.orders)}
-                  <span className="text-sm text-gray-500 ml-1">vs previous period</span>
+                  <span className="text-xs sm:text-sm text-gray-500 ml-1">vs previous period</span>
                 </div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className={`text-3xl font-bold ${getGrowthColor(analyticsData.growth.customers)} mb-2`}>
+              <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className={`text-2xl sm:text-3xl font-bold ${getGrowthColor(analyticsData.growth.customers)} mb-2`}>
                   {analyticsData.growth.customers >= 0 ? "+" : ""}
                   {analyticsData.growth.customers}%
                 </div>
-                <div className="text-gray-600 font-medium">Customer Growth</div>
+                <div className="text-gray-600 font-medium text-sm sm:text-base">Customer Growth</div>
                 <div className="flex items-center justify-center mt-2">
                   {getGrowthIcon(analyticsData.growth.customers)}
-                  <span className="text-sm text-gray-500 ml-1">vs previous period</span>
+                  <span className="text-xs sm:text-sm text-gray-500 ml-1">vs previous period</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Detailed Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
             {/* Top Products */}
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
-                  <p className="text-sm text-gray-500">Best performing products by revenue</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Top Products</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">Best performing products by revenue</p>
                 </div>
-                <div className="p-2 bg-green-50 rounded-full">
-                  <Package size={20} className="text-green-600" />
+                <div className="p-1.5 sm:p-2 bg-green-50 rounded-full">
+                  <Package size={16} className="text-green-600 sm:hidden" />
+                  <Package size={20} className="text-green-600 hidden sm:block" />
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {analyticsData.productRevenue.slice(0, 5).map((product, index) => (
                   <div
                     key={product._id}
-                    className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                        <span className="text-teal-600 font-semibold">#{index + 1}</span>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                        <span className="text-teal-600 font-semibold text-xs sm:text-sm">#{index + 1}</span>
                       </div>
                     </div>
-                    <div className="flex-grow">
-                      <div className="font-medium text-gray-900">{product.productName}</div>
-                      <div className="text-sm text-gray-500 flex items-center">
+                    <div className="flex-grow min-w-0">
+                      <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{product.productName}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 flex items-center">
                         <span className="inline-block w-2 h-2 rounded-full bg-teal-500 mr-1"></span>
-                        {product.category}
+                        <span className="truncate">{product.category}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-gray-900">{formatCurrency(product.revenue)}</div>
-                      <div className="text-sm text-gray-500">{product.quantitySold} sold</div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(product.revenue)}</div>
+                      <div className="text-xs sm:text-sm text-gray-500">{product.quantitySold} sold</div>
                     </div>
                   </div>
                 ))}
@@ -530,38 +558,39 @@ export default function RevenueAnalyticsPage() {
             </div>
 
             {/* Top Customers */}
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
-                  <p className="text-sm text-gray-500">Highest spending customers</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Top Customers</h3>
+                  <p className="text-xs sm:text-sm text-gray-500">Highest spending customers</p>
                 </div>
-                <div className="p-2 bg-purple-50 rounded-full">
-                  <Users size={20} className="text-purple-600" />
+                <div className="p-1.5 sm:p-2 bg-purple-50 rounded-full">
+                  <Users size={16} className="text-purple-600 sm:hidden" />
+                  <Users size={20} className="text-purple-600 hidden sm:block" />
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {analyticsData.topCustomers.slice(0, 5).map((customer, index) => (
                   <div
                     key={customer._id}
-                    className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <span className="text-purple-600 font-semibold">#{index + 1}</span>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-semibold text-xs sm:text-sm">#{index + 1}</span>
                       </div>
                     </div>
-                    <div className="flex-grow">
-                      <div className="font-medium text-gray-900">{customer.customerName}</div>
-                      <div className="text-sm text-gray-500 flex items-center">
-                        <Mail size={12} className="mr-1" />
-                        {customer.customerEmail}
+                    <div className="flex-grow min-w-0">
+                      <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{customer.customerName}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 flex items-center">
+                        <Mail size={10} className="mr-1 flex-shrink-0" />
+                        <span className="truncate">{customer.customerEmail}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-gray-900">{formatCurrency(customer.totalSpent)}</div>
-                      <div className="text-sm text-gray-500 flex items-center justify-end">
-                        <ShoppingCart size={12} className="mr-1" />
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(customer.totalSpent)}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 flex items-center justify-end">
+                        <ShoppingCart size={10} className="mr-1" />
                         {customer.orderCount} orders
                       </div>
                     </div>
@@ -572,69 +601,71 @@ export default function RevenueAnalyticsPage() {
           </div>
 
           {/* Order Size Analysis */}
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-8">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow mb-4 sm:mb-6 lg:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Order Size Distribution</h3>
-                <p className="text-sm text-gray-500">Analysis of order values by range</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Order Size Distribution</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Analysis of order values by range</p>
               </div>
-              <div className="p-2 bg-orange-50 rounded-full">
-                <ShoppingCart size={20} className="text-orange-600" />
+              <div className="p-1.5 sm:p-2 bg-orange-50 rounded-full">
+                <ShoppingCart size={16} className="text-orange-600 sm:hidden" />
+                <ShoppingCart size={20} className="text-orange-600 hidden sm:block" />
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {analyticsData.orderSizeAnalysis.map((range, index) => (
                 <div
                   key={range._id}
-                  className="text-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-teal-200 hover:bg-teal-50 transition-colors"
+                  className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-teal-200 hover:bg-teal-50 transition-colors"
                 >
-                  <div className="text-sm font-medium text-gray-600 mb-2">{range._id}</div>
-                  <div className="text-xl font-bold text-gray-900">{range.orders}</div>
+                  <div className="text-xs sm:text-sm font-medium text-gray-600 mb-2 truncate">{range._id}</div>
+                  <div className="text-lg sm:text-xl font-bold text-gray-900">{range.orders}</div>
                   <div className="text-xs text-gray-500">orders</div>
-                  <div className="text-sm text-teal-600 mt-1 font-medium">{formatCurrency(range.revenue)}</div>
+                  <div className="text-xs sm:text-sm text-teal-600 mt-1 font-medium">{formatCurrency(range.revenue)}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Payment Analysis */}
-          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Payment Method Analysis</h3>
-                <p className="text-sm text-gray-500">Revenue breakdown by payment method</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Payment Method Analysis</h3>
+                <p className="text-xs sm:text-sm text-gray-500">Revenue breakdown by payment method</p>
               </div>
-              <div className="p-2 bg-blue-50 rounded-full">
-                <CreditCard size={20} className="text-blue-600" />
+              <div className="p-1.5 sm:p-2 bg-blue-50 rounded-full">
+                <CreditCard size={16} className="text-blue-600 sm:hidden" />
+                <CreditCard size={20} className="text-blue-600 hidden sm:block" />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {analyticsData.paymentAnalysis.map((payment, index) => (
                 <div
                   key={payment._id}
-                  className="p-5 border border-gray-200 rounded-lg hover:border-teal-200 hover:shadow-sm transition-all"
+                  className="p-4 sm:p-5 border border-gray-200 rounded-lg hover:border-teal-200 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-medium text-gray-900 flex items-center">
-                      <CreditCard size={16} className="text-teal-500 mr-2" />
-                      {payment._id}
+                    <span className="font-medium text-gray-900 flex items-center text-sm sm:text-base">
+                      <CreditCard size={14} className="text-teal-500 mr-2 flex-shrink-0" />
+                      <span className="truncate">{payment._id}</span>
                     </span>
-                    <span className="text-xs px-2 py-1 bg-teal-100 text-teal-800 rounded-full">
+                    <span className="text-xs px-2 py-1 bg-teal-100 text-teal-800 rounded-full flex-shrink-0">
                       {Math.round((payment.revenue / analyticsData.summary.thisYear.revenue) * 100)}%
                     </span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Revenue:</span>
-                      <span className="font-semibold text-gray-900">{formatCurrency(payment.revenue)}</span>
+                      <span className="text-gray-600 text-sm sm:text-base">Revenue:</span>
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(payment.revenue)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Orders:</span>
-                      <span className="font-semibold text-gray-900">{payment.orders}</span>
+                      <span className="text-gray-600 text-sm sm:text-base">Orders:</span>
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">{payment.orders}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Avg Order Value:</span>
-                      <span className="font-semibold text-gray-900">{formatCurrency(payment.avgOrderValue)}</span>
+                      <span className="text-gray-600 text-sm sm:text-base">Avg Order Value:</span>
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">{formatCurrency(payment.avgOrderValue)}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                       <div
