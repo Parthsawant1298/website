@@ -38,6 +38,44 @@ export default function AboutusPage() {
     }
   ]
 
+  const categories = [
+    {
+      id: 'mop-tools',
+      title: 'MOP & TOOLS',
+      label: 'EXPLORE',
+      image: 'https://images.unsplash.com/photo-1558618047-e99f1b8e4b20?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      route: '/category/mop-tools'
+    },
+    {
+      id: 'disposables',
+      title: 'DISPOSABLES',
+      label: 'EXPLORE',
+      image: 'https://images.unsplash.com/photo-1607721958099-de640de69d9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      route: '/category/disposables'
+    },
+    {
+      id: 'stationery',
+      title: 'STATIONERY',
+      label: 'EXPLORE',
+      image: 'https://images.unsplash.com/photo-1549740425-5e9ed4d8cd34?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      route: '/category/stationery'
+    },
+    {
+      id: 'tissue',
+      title: 'TISSUE',
+      label: 'FEATURED',
+      image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      route: '/category/tissue'
+    },
+    {
+      id: 'cleaning-chemicals',
+      title: 'CLEANING CHEMICALS',
+      label: 'FEATURED',
+      image: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+      route: '/category/cleaning-chemicals'
+    }
+  ]
+
   return (
     <main className="min-h-screen bg-gray-50">
       <Header />
@@ -122,26 +160,45 @@ export default function AboutusPage() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white rounded-xl p-8 shadow-lg">
               <Package className="h-12 w-12 text-teal-600 mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Housekeeping Materials</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">MOP & TOOLS</h3>
               <ul className="text-gray-600 space-y-2">
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Broom, Phenyl, Hand wash
+                  Professional cleaning mops
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Floor duster and cleaners
+                  Cleaning tools and equipment
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Tissue papers and dispensers
+                  Floor cleaning accessories
                 </li>
               </ul>
             </div>
             
             <div className="bg-white rounded-xl p-8 shadow-lg">
               <Package className="h-12 w-12 text-teal-600 mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Office Stationery</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">DISPOSABLES</h3>
+              <ul className="text-gray-600 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Eco-friendly disposable items
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Paper plates and cups
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Disposable cutlery
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-lg">
+              <Package className="h-12 w-12 text-teal-600 mb-6" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">STATIONERY</h3>
               <ul className="text-gray-600 space-y-2">
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
@@ -157,22 +214,43 @@ export default function AboutusPage() {
                 </li>
               </ul>
             </div>
-            
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mt-8">
             <div className="bg-white rounded-xl p-8 shadow-lg">
               <Package className="h-12 w-12 text-teal-600 mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pantry & IT Items</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">TISSUE</h3>
               <ul className="text-gray-600 space-y-2">
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Tea, Coffee, Sugar, Dairy whitener
+                  Premium tissue papers
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  Mouse, Keyboard, Hard disk
+                  Tissue dispensers and holders
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
-                  COVID Safety Items
+                  M-fold and rolled tissues
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 shadow-lg">
+              <Package className="h-12 w-12 text-teal-600 mb-6" />
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">CLEANING CHEMICALS</h3>
+              <ul className="text-gray-600 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Professional cleaning solutions
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Disinfectants and sanitizers
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                  Floor and surface cleaners
                 </li>
               </ul>
             </div>
