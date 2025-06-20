@@ -55,22 +55,22 @@ export default function OrderHistoryPage() {
       case 'processing':
         return { 
           color: 'text-blue-500', 
-          icon: <Package className="mr-2" size={20} /> 
+          icon: <Package className="mr-1 sm:mr-2" size={16} /> 
         };
       case 'delivered':
         return { 
           color: 'text-green-500', 
-          icon: <CheckCircle className="mr-2" size={20} /> 
+          icon: <CheckCircle className="mr-1 sm:mr-2" size={16} /> 
         };
       case 'payment failed':
         return { 
           color: 'text-red-500', 
-          icon: <XCircle className="mr-2" size={20} /> 
+          icon: <XCircle className="mr-1 sm:mr-2" size={16} /> 
         };
       default:
         return { 
           color: 'text-gray-500', 
-          icon: <Package className="mr-2" size={20} /> 
+          icon: <Package className="mr-1 sm:mr-2" size={16} /> 
         };
     }
   };
@@ -78,17 +78,17 @@ export default function OrderHistoryPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-8 lg:py-12 px-2 sm:px-4 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white shadow-md rounded-lg animate-pulse p-6">
-            <div className="h-8 bg-gray-200 rounded w-1/2 mb-6"></div>
+          <div className="bg-white shadow-md rounded-lg animate-pulse p-3 sm:p-6">
+            <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 mb-4 sm:mb-6"></div>
             {[1, 2, 3].map((_, index) => (
-              <div key={index} className="mb-4 pb-4 border-b border-gray-200">
-                <div className="flex items-center space-x-4">
-                  <div className="w-20 h-20 bg-gray-200 rounded"></div>
+              <div key={index} className="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 sm:h-4 bg-gray-200 rounded w-1/2"></div>
                   </div>
                 </div>
               </div>
@@ -102,14 +102,14 @@ export default function OrderHistoryPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Unable to Fetch Orders</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-8 lg:py-12 px-2 sm:px-4 lg:px-8 flex items-center justify-center">
+        <div className="bg-white shadow-md rounded-lg p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center mx-2">
+          <AlertCircle className="mx-auto mb-4 text-red-500" size={40} />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Unable to Fetch Orders</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-6">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors text-sm sm:text-base"
           >
             Try Again
           </button>
@@ -121,16 +121,16 @@ export default function OrderHistoryPage() {
   // Empty state
   if (orders.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full text-center">
-          <Package className="mx-auto mb-4 text-gray-400" size={48} />
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">No Orders Yet</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-8 lg:py-12 px-2 sm:px-4 lg:px-8 flex items-center justify-center">
+        <div className="bg-white shadow-md rounded-lg p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center mx-2">
+          <Package className="mx-auto mb-4 text-gray-400" size={40} />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">No Orders Yet</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
             You haven't placed any orders yet. Start shopping and your order history will appear here.
           </p>
           <Link 
             href="/products"
-            className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
+            className="inline-block w-full sm:w-auto px-4 sm:px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors text-sm sm:text-base"
           >
             Browse Products
           </Link>
@@ -140,47 +140,47 @@ export default function OrderHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-         <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8 lg:py-12 px-2 sm:px-4 lg:px-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 max-w-4xl mx-auto">
         <Link 
           href="/" 
-          className="text-teal-600 hover:text-teal-800 transition-colors flex items-center"
+          className="text-teal-600 hover:text-teal-800 transition-colors flex items-center text-sm sm:text-base"
         >
-          <ArrowLeft size={20} className="mr-2"/>
+          <ArrowLeft size={16} className="mr-1 sm:mr-2"/>
           Back to Main
         </Link>
       </div>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="bg-teal-600 text-white px-6 py-4">
-            <h1 className="text-2xl font-bold">Order History</h1>
-            <p className="text-teal-100">Review your past orders and their current status</p>
+          <div className="bg-teal-600 text-white px-3 sm:px-6 py-3 sm:py-4">
+            <h1 className="text-xl sm:text-2xl font-bold">Order History</h1>
+            <p className="text-teal-100 text-sm sm:text-base mt-1">Review your past orders and their current status</p>
           </div>
 
           <div className="divide-y divide-gray-200">
             {orders.map((order) => (
-              <div key={order._id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Order ID: {order._id}</p>
-                    <p className="text-sm text-gray-500">
+              <div key={order._id} className="px-3 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2">
+                  <div className="space-y-1">
+                    <p className="text-xs sm:text-sm text-gray-500 break-all">Order ID: {order._id}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">
                       Placed on {formatDate(order.createdAt)}
                     </p>
                   </div>
-                  <div className={`flex items-center ${getOrderStatusStyle(order.status).color}`}>
+                  <div className={`flex items-center ${getOrderStatusStyle(order.status).color} self-start sm:self-auto`}>
                     {getOrderStatusStyle(order.status).icon}
-                    <span className="capitalize">{order.status}</span>
+                    <span className="capitalize text-sm sm:text-base">{order.status}</span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {order.items.map((item) => {
                     // Add null check for product
                     if (!item.product) {
                       return (
                         <div 
                           key={item._id} 
-                          className="flex items-center space-x-4 hover:bg-gray-100 p-2 rounded-lg transition-colors text-gray-500"
+                          className="flex items-center space-x-2 sm:space-x-4 hover:bg-gray-100 p-2 rounded-lg transition-colors text-gray-500 text-sm sm:text-base"
                         >
                           Product Unavailable
                         </div>
@@ -190,33 +190,36 @@ export default function OrderHistoryPage() {
                     return (
                       <div 
                         key={item._id} 
-                        className="flex items-center space-x-4 hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                        className="flex items-center space-x-2 sm:space-x-4 hover:bg-gray-100 p-2 rounded-lg transition-colors"
                       >
-                        <div className="relative w-20 h-20 shrink-0">
+                        <div className="relative w-14 h-14 sm:w-20 sm:h-20 shrink-0">
                           <Image 
                             src={item.product.mainImage || '/default-product-image.png'} 
                             alt={item.product.name || 'Product'}
                             fill
                             className="object-cover rounded-md"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            sizes="(max-width: 640px) 56px, 80px"
                             onError={(e) => {
                               e.target.src = '/default-product-image.png';
                             }}
                           />
                         </div>
                         
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">
                             {item.product.name || 'Unnamed Product'}
                           </h3>
-                          <p className="text-sm text-gray-600">
-                            Quantity: {item.quantity} | 
-                            Price: {formatCurrency(item.price)}
-                          </p>
+                          <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <span>Quantity: {item.quantity}</span>
+                              <span className="hidden sm:inline">|</span>
+                              <span>Price: {formatCurrency(item.price)}</span>
+                            </div>
+                          </div>
                         </div>
                         
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">
+                        <div className="text-right shrink-0">
+                          <p className="font-semibold text-gray-900 text-sm sm:text-base">
                             {formatCurrency(item.price * item.quantity)}
                           </p>
                         </div>
@@ -225,19 +228,19 @@ export default function OrderHistoryPage() {
                   })}
                 </div>
 
-                <div className="mt-4 flex justify-between items-center border-t pt-4">
-                  <p className="text-gray-600">Total Amount</p>
-                  <p className="text-xl font-bold text-teal-600">
+                <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-t pt-3 sm:pt-4 gap-2">
+                  <p className="text-gray-600 text-sm sm:text-base">Total Amount</p>
+                  <p className="text-lg sm:text-xl font-bold text-teal-600">
                     {formatCurrency(order.totalAmount)}
                   </p>
                 </div>
 
                 <Link 
                   href={`/order/${order._id}`} 
-                  className="mt-4 w-full flex items-center justify-center text-teal-600 hover:text-teal-800 transition-colors"
+                  className="mt-3 sm:mt-4 w-full flex items-center justify-center text-teal-600 hover:text-teal-800 transition-colors text-sm sm:text-base py-2 sm:py-0"
                 >
                   View Order Details
-                  <ChevronRight size={20} className="ml-2" />
+                  <ChevronRight size={16} className="ml-1 sm:ml-2" />
                 </Link>
               </div>
             ))}
