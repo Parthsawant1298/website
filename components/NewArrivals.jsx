@@ -85,19 +85,20 @@ export default function NewArrivals() {
   const getCardWidth = () => {
     if (typeof window === 'undefined') return '100%';
     
-    const containerPadding = window.innerWidth < 640 ? 64 : window.innerWidth < 1200 ? 96 : 160;
-    const gap = window.innerWidth < 640 ? 16 : 24; // gap-4 or gap-6
+    // More conservative padding calculation for mobile
+    const containerPadding = window.innerWidth < 640 ? 80 : window.innerWidth < 1200 ? 96 : 160;
+    const gap = window.innerWidth < 640 ? 12 : 24; // Smaller gap on mobile
     const availableWidth = window.innerWidth - containerPadding;
     const totalGaps = (itemsToShow - 1) * gap;
     const cardWidth = (availableWidth - totalGaps) / itemsToShow;
     
-    // Set minimum and maximum card widths for better consistency
+    // More restrictive max widths to ensure cards fit
     let minWidth, maxWidth;
     
     if (window.innerWidth < 640) {
-      // Mobile
-      minWidth = 280;
-      maxWidth = 350;
+      // Mobile - ensure it fits within screen
+      minWidth = 260;
+      maxWidth = Math.min(320, window.innerWidth - 80); // Never exceed screen minus padding
     } else if (window.innerWidth < 1200) {
       // Tablet and medium screens
       minWidth = 220;
@@ -115,7 +116,7 @@ export default function NewArrivals() {
   const scrollNext = () => {
     if (carouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24; // Use same gap as getCardWidth
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       carouselRef.current.scrollBy({
@@ -128,7 +129,7 @@ export default function NewArrivals() {
   const scrollPrev = () => {
     if (carouselRef.current) {
       const cardWidth = getCardWidth();
-      const gap = window.innerWidth < 640 ? 16 : 24;
+      const gap = window.innerWidth < 640 ? 12 : 24; // Use same gap as getCardWidth
       const scrollDistance = (cardWidth + gap) * itemsToShow;
       
       carouselRef.current.scrollBy({
@@ -411,7 +412,7 @@ export default function NewArrivals() {
           </button>
           
           {/* Products container */}
-          <div className="mx-6 sm:mx-8 lg:mx-16">
+          <div className="mx-8 sm:mx-8 lg:mx-16">
             <div 
               ref={carouselRef}
               className="flex overflow-x-auto gap-3 sm:gap-4 lg:gap-8 pb-3 sm:pb-4 hide-scrollbar snap-x snap-mandatory"
@@ -434,7 +435,7 @@ export default function NewArrivals() {
               onClick={() => {
                 if (carouselRef.current) {
                   const cardWidth = getCardWidth();
-                  const gap = 16;
+                  const gap = 12; // Use mobile gap consistently
                   const scrollDistance = (cardWidth + gap) * itemsToShow * index;
                   carouselRef.current.scrollTo({
                     left: scrollDistance,
