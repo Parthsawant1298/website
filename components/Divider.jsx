@@ -10,13 +10,13 @@ const KonceptServicesBanner = () => {
   const banners = [
     {
       image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-      title: "OFFICE SUPPLY SOLUTIONS DELIVERED IN 48 HOURS",
+      title: "HOUSEKEEPING SUPPLY SOLUTIONS DELIVERED IN 48 HOURS",
       buttonText: "EXPLORE PRODUCTS",
       buttonLink: "https://konceptservices.in/products"
     },
     {
       image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-      title: "COMPLETE HOUSEKEEPING & STATIONERY SUPPLIES",
+      title: "COMPLETE CLEANING & HOUSEKEEPING SUPPLIES",
       buttonText: "VIEW CATALOG",
       buttonLink: "https://konceptservices.in/catalog"
     },
@@ -28,9 +28,9 @@ const KonceptServicesBanner = () => {
     },
     {
       image: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-      title: "COVID SAFETY PRODUCTS FOR YOUR WORKPLACE",
-      buttonText: "SAFETY ITEMS",
-      buttonLink: "https://konceptservices.in/covid-products"
+      title: "PROFESSIONAL CLEANING CHEMICALS FOR YOUR WORKPLACE",
+      buttonText: "CLEANING ITEMS",
+      buttonLink: "https://konceptservices.in/cleaning-products"
     },
     {
       image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
