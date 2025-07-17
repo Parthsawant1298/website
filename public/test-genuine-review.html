@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Genuine Review Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Create Genuine Review Test</h1>
+        
+        <form id="reviewForm">
+            <div class="form-group">
+                <label for="userId">User ID:</label>
+                <input type="text" id="userId" placeholder="Enter user ID (e.g., 669e8ef7c15b5267f8bc3456)" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="productId">Product ID:</label>
+                <input type="text" id="productId" placeholder="Enter product ID (e.g., 669e8ef7c15b5267f8bc1234)" required>
+            </div>
+            
+            <button type="submit">Create Genuine Review</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('reviewForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const productId = document.getElementById('productId').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!userId || !productId) {
+                resultDiv.innerHTML = '<div class="error">Please fill in both User ID and Product ID</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="info">Creating genuine review...</div>';
+            
+            try {
+                const response = await fetch('/api/test/create-genuine-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        productId: productId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Genuine Review Created Successfully!</div>
+                        
+                        <h3>Review Details:</h3>
+                        <strong>User:</strong> ${data.review.user.name}
+                        <strong>Product:</strong> ${data.review.product.name}
+                        <strong>Rating:</strong> ${data.review.rating}/5 stars
+                        <strong>Comment:</strong> ${data.review.comment}
+                        
+                        <h3>AI Analysis:</h3>
+                        <strong>Classification:</strong> ${data.aiAnalysis.classification}
+                        <strong>Model Version:</strong> ${data.aiAnalysis.modelVersion}
+                        <strong>Confidence:</strong> ${data.aiAnalysis.confidence}
+                        <strong>Flags:</strong> ${data.aiAnalysis.flags.join(', ') || 'None'}
+                        
+                        <h3>Purchase Verification:</h3>
+                        <strong>Has Purchased:</strong> ${data.purchaseInfo.hasPurchased ? 'Yes ✅' : 'No ❌'}
+                        <strong>Purchase Date:</strong> ${data.purchaseInfo.purchaseDate || 'N/A'}
+                        <strong>Order ID:</strong> ${data.purchaseInfo.orderId || 'N/A'}
+                        
+                        <h3>Full AI Analysis:</h3>
+                        ${JSON.stringify(data.aiAnalysis, null, 2)}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, User, LogOut, ChevronDown, Plus, Package, Home, Settings, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, ChevronDown, Plus, Package, Home, Settings, Shield, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -90,6 +90,13 @@ export default function AdminNavbar() {
             <div className="flex items-center">
               <Package size={18} className="mr-2" />
               <span>Products</span>
+            </div>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
+          </Link>
+          <Link href="/admin/reviews" className="text-gray-100 hover:text-white transition-colors py-2 relative group">
+            <div className="flex items-center">
+              <Star size={18} className="mr-2" />
+              <span>Reviews</span>
             </div>
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
           </Link>
@@ -190,6 +197,10 @@ export default function AdminNavbar() {
               <Link href="/admin/products" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
                 <Package size={18} className="mr-2" />
                 <span>Products</span>
+              </Link>
+              <Link href="/admin/reviews" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
+                <Star size={18} className="mr-2" />
+                <span>Reviews</span>
               </Link>
               <Link href="/add-product" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
                 <Plus size={18} className="mr-2" />

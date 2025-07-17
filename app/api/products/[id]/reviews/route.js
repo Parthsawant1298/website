@@ -1,10 +1,12 @@
 // app/api/products/[id]/reviews/route.js
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import connectDB from '@/lib/mongodb';
+import ReviewAnalysisService from '@/lib/reviewAnalysis';
+import Order from '@/models/order';
 import Product from '@/models/product';
 import Review from '@/models/review';
 import User from '@/models/user';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 // GET reviews for a specific product
 export async function GET(request, context) {
@@ -14,7 +16,10 @@ export async function GET(request, context) {
     
     await connectDB();
     
-    const reviews = await Review.find({ product: id })
+    const reviews = await Review.find({ 
+      product: id,
+      status: { $ne: 'hidden' } // Exclude hidden reviews from public display
+    })
       .populate({
         path: 'user',
         select: 'name profilePicture'
@@ -80,6 +85,9 @@ export async function POST(request, context) {
       );
     }
     
+    // TEMPORARILY DISABLED FOR ML TESTING
+    // Remove this comment and uncomment below code when ready for production
+    /*
     // Check if user already reviewed this product
     const existingReview = await Review.findOne({
       user: userId,
@@ -92,13 +100,70 @@ export async function POST(request, context) {
         { status: 400 }
       );
     }
+    */
+    
+    // Check if user has purchased this product (PURCHASE VERIFICATION)
+    console.log('Checking purchase verification for user:', userId, 'product:', productId);
+    
+    const purchaseRecord = await Order.findOne({
+      user: userId,
+      'items.product': productId,
+      paymentStatus: 'completed',
+      status: { $in: ['processing', 'delivered'] }
+    }).sort({ createdAt: -1 }); // Get most recent purchase
+    
+    let hasPurchased = false;
+    let purchaseDate = null;
+    
+    if (purchaseRecord) {
+      hasPurchased = true;
+      purchaseDate = purchaseRecord.createdAt;
+      console.log('Purchase verified! Order found:', purchaseRecord._id, 'Date:', purchaseDate);
+    } else {
+      console.log('No purchase record found for this user-product combination');
+    }
     
     // Create new review
-    const review = await Review.create({
+    const reviewData = {
       user: userId,
       product: productId,
       rating: Number(rating),
       comment
+    };
+
+    // Initialize ML analysis service
+    const analysisService = new ReviewAnalysisService();
+    
+    // Analyze the review with complete context including purchase verification
+    // Get ML analysis with enhanced purchase verification data
+    console.log('🔍 Purchase verification status before AI analysis:');
+    console.log('- hasPurchased:', hasPurchased);
+    console.log('- purchaseDate:', purchaseDate);
+    console.log('- purchaseRecord ID:', purchaseRecord?._id);
+    
+    const mlAnalysis = await analysisService.analyzeReview({
+      comment,
+      rating,
+      productName: product.name,
+      productDescription: product.description,
+      productCategory: product.category,
+      productPrice: `₹${product.price}`,
+      hasPurchased: hasPurchased,
+      purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
+      reviewDate: new Date().toISOString()
+    });
+    
+    console.log('🤖 AI Analysis Result:');
+    console.log('- Classification:', mlAnalysis.classification);
+    console.log('- Flags:', mlAnalysis.flags);
+    console.log('- Has no_purchase_record flag:', mlAnalysis.flags?.includes('no_purchase_record'));
+    console.log('- Has unverified_reviewer flag:', mlAnalysis.flags?.includes('unverified_reviewer'));
+
+    // Create review with ML analysis
+    const review = await Review.create({
+      ...reviewData,
+      aiAnalysis: mlAnalysis,
+      status: mlAnalysis.classification === 'suspicious' ? 'flagged' : 'published'
     });
     
     // Get the populated review

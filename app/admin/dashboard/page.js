@@ -29,6 +29,7 @@ import {
   XCircle,
 } from "lucide-react"
 import AdminNavbar from "@/components/AdminNavbar"
+import ReviewAnalyticsDashboard from "@/components/ReviewAnalyticsDashboard"
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -429,6 +430,11 @@ export default function AdminDashboardPage() {
                 <ChevronRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
+          </div>
+
+          {/* Review Analytics */}
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <ReviewAnalyticsDashboard />
           </div>
 
           {/* Main content grid */}

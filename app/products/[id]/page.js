@@ -17,7 +17,8 @@ import {
   Info,
   Bookmark,
   MessageCircle,
-  CreditCard
+  CreditCard,
+  AlertTriangle
 } from "lucide-react"
 import { use } from "react"
 
@@ -103,6 +104,9 @@ export default function ProductDetailPage({ params }) {
 
         setReviews(data.reviews)
 
+        // TEMPORARILY DISABLED FOR ML TESTING
+        // Remove this comment and uncomment below code when ready for production
+        /*
         // Check if current user has already reviewed this product
         const response2 = await fetch("/api/auth/user")
         if (response2.ok) {
@@ -112,6 +116,7 @@ export default function ProductDetailPage({ params }) {
             setHasUserReviewed(!!userReview)
           }
         }
+        */
       } catch (error) {
         console.error("Fetch reviews error:", error)
         setReviewsError("Failed to load reviews. Please try again.")
@@ -753,7 +758,9 @@ export default function ProductDetailPage({ params }) {
                 </div>
 
                 {/* Review Form */}
-                {!hasUserReviewed ? (
+                {/* TEMPORARILY ALLOWING MULTIPLE REVIEWS FOR ML TESTING */}
+                {/* Change this back to {!hasUserReviewed ? ( for production */}
+                {true ? (
                   <div className="mb-8 border-b border-gray-200 pb-8">
                     <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
 
@@ -841,7 +848,9 @@ export default function ProductDetailPage({ params }) {
                       <button
                         onClick={() => setActiveTab("reviews")}
                         className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
-                        disabled={hasUserReviewed}
+                        // TEMPORARILY DISABLED FOR ML TESTING
+                        // disabled={hasUserReviewed}
+                        disabled={false}
                       >
                         Write a Review
                       </button>
@@ -864,8 +873,16 @@ export default function ProductDetailPage({ params }) {
                                 </div>
                               )}
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900">{review.user.name}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <p className="font-medium text-gray-900">{review.user.name}</p>
+                                {review.aiAnalysis && review.aiAnalysis.classification === 'genuine' && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <Shield size={10} className="mr-1" />
+                                    Verified
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-gray-500">{formatDate(review.createdAt)}</p>
                             </div>
 
@@ -889,6 +906,16 @@ export default function ProductDetailPage({ params }) {
                           </div>
 
                           <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
+                          
+                          {/* AI Analysis Info (visible only if flagged or for admins) */}
+                          {review.aiAnalysis && review.aiAnalysis.classification === 'suspicious' && (
+                            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                              <div className="flex items-center text-xs text-yellow-800">
+                                <AlertTriangle size={12} className="mr-1" />
+                                This review has been flagged for verification
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

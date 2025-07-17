@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, User, LogOut, ChevronDown, ShoppingCart, Package } from 'lucide-react'
+import { Menu, X, User, LogOut, ChevronDown, ShoppingCart, Package, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -218,6 +218,11 @@ export default function Header() {
                  <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-500">
                    <User size={16} className="mr-2" />
                    <span>My Profile</span>
+                 </Link>
+                 
+                 <Link href="/user-reviews" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-500">
+                   <Star size={16} className="mr-2" />
+                   <span>My Reviews</span>
                  </Link>
                  
                  <Link href="/order-history" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-500">

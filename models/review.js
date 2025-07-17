@@ -23,14 +23,196 @@ const reviewSchema = new mongoose.Schema({
     required: [true, 'Please provide a review comment'],
     trim: true
   },
+  // Edit History Tracking
+  editHistory: [{
+    previousComment: String,
+    previousRating: Number,
+    editedAt: {
+      type: Date,
+      default: Date.now
+    },
+    editReason: String
+  }],
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
+  lastEditedAt: Date,
+  // ML Analysis Fields
+  aiAnalysis: {
+    classification: {
+      type: String,
+      enum: ['genuine', 'suspicious', 'pending'],
+      default: 'pending'
+    },
+    confidence: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0
+    },
+    flags: [{
+      type: String,
+      enum: [
+        'spam',
+        'fake',
+        'inappropriate',
+        'helpful',
+        'verified_purchase',
+        'long_text',
+        'short_text',
+        'positive_sentiment',
+        'negative_sentiment',
+        'neutral_sentiment',
+        'high_sentiment_mismatch',
+        'moderate_sentiment_mismatch',
+        'generic_language',
+        'suspiciously_short',
+        'ai_flagged_suspicious',
+        'safety_filter_triggered',
+        'batch_analysis_error',
+        'product_mismatch',
+        'no_purchase_verification',
+        'purchase_timing_suspicious',
+        'product_irrelevant_content',
+        'unverified_purchase',
+        'generic_review',
+        'potential_fake_review',
+        'suspicious_language_patterns',
+        'lack_product_specificity',
+        'rating_content_mismatch',
+        'promotional_content',
+        'copy_paste_indicators',
+        'bot_like_patterns',
+        'emotional_authenticity_low',
+        'timeline_suspicious',
+        'multiple_edits_suspicious',
+        'technical_inaccuracies',
+        'price_expectation_mismatch',
+        'no_purchase_record',
+        'lack_of_personal_experience',
+        'insufficient_product_details',
+        'overly_generic_language',
+        'timing_analysis_suspicious',
+        'authenticity_concerns',
+        'product_knowledge_lacking',
+        'review_pattern_suspicious',
+        'language_style_inconsistent',
+        'emotional_tone_mismatch',
+        'product_feature_mismatch',
+        'experience_timeline_inconsistent',
+        'unverified_reviewer'
+      ]
+    }],
+    reasoning: String,
+    analyzedAt: Date,
+    needsManualReview: {
+      type: Boolean,
+      default: false
+    },
+    // Gemini-specific analysis fields
+    sentimentScore: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5
+    },
+    authenticityScore: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5
+    },
+    productRelevanceScore: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5
+    },
+    purchaseVerificationScore: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5
+    },
+    // NEW: Nested scores object for enhanced analysis
+    scores: {
+      sentimentScore: {
+        type: Number,
+        min: 0,
+        max: 1
+      },
+      authenticityScore: {
+        type: Number,
+        min: 0,
+        max: 1
+      },
+      productRelevanceScore: {
+        type: Number,
+        min: 0,
+        max: 1
+      },
+      purchaseVerificationScore: {
+        type: Number,
+        min: 0,
+        max: 1
+      },
+      overallRiskScore: {
+        type: Number,
+        min: 0,
+        max: 1
+      }
+    },
+    // Enhanced analysis fields
+    detailedAnalysis: {
+      purchaseVerificationAnalysis: String,
+      productRelevanceAnalysis: String,
+      authenticityAssessment: String,
+      linguisticAnalysis: String,
+      suspiciousPatterns: String,
+      timelineAnalysis: String,
+      specificConcerns: String
+    },
+    recommendations: {
+      action: {
+        type: String,
+        enum: ['approve', 'reject', 'manual_review']
+      },
+      priority: {
+        type: String,
+        enum: ['low', 'medium', 'high']
+      },
+      explanation: String
+    },
+    keyInsights: [String],
+    riskLevel: {
+      type: String,
+      enum: ['low', 'medium', 'high']
+    },
+    modelVersion: String
+  },
+  // Review Status
+  status: {
+    type: String,
+    enum: ['published', 'flagged', 'hidden', 'under_review'],
+    default: 'published'
+  },
+  // Admin moderation
+  moderationNotes: String,
+  moderatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  moderatedAt: Date,
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Prevent user from submitting more than one review per product
-reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+// TEMPORARILY DISABLED FOR ML TESTING
+// Remove this comment and uncomment below line when ready for production
+// reviewSchema.index({ product: 1, user: 1 }, { unique: true });
 
 // Static method to calculate average rating for a product
 reviewSchema.statics.calculateAverageRating = async function(productId) {

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Analysis Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .stat .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Review Analysis Debug Tool</h1>
+    
+    <div class="container">
+        <h2>1. Test AI Service Directly</h2>
+        <p>Test if the AI analysis service is working properly:</p>
+        <button onclick="testAI()">Test AI Service</button>
+        <div id="aiTest"></div>
+    </div>
+    
+    <div class="container">
+        <h2>2. Check Database Reviews</h2>
+        <p>Check what reviews exist in the database:</p>
+        <button onclick="checkReviews()">Check Reviews</button>
+        <div id="reviewCheck"></div>
+    </div>
+    
+    <div class="container">
+        <h2>3. Force Re-analyze All Reviews</h2>
+        <p>Force re-analysis of ALL reviews with the new Gemini 2.0 Flash model:</p>
+        <button onclick="reanalyzeAll()">Re-analyze All Reviews</button>
+        <div id="reanalysis"></div>
+    </div>
+
+    <script>
+        async function testAI() {
+            const resultDiv = document.getElementById('aiTest');
+            resultDiv.innerHTML = '<div class="info">Testing AI service...</div>';
+            
+            try {
+                const response = await fetch('/api/test/ai-direct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        comment: "This is a great product! I purchased it last month and I'm very satisfied.",
+                        rating: 5,
+                        hasPurchased: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ AI Service Working!</div>
+                        <div class="stats">
+                            <div class="stat">
+                                <h3>Classification</h3>
+                                <div class="number">${data.aiResult.classification}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Model Version</h3>
+                                <div class="number">${data.aiResult.modelVersion}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Purchase Verification</h3>
+                                <div class="number">${data.analysis.correctPurchaseVerification ? '✅' : '❌'}</div>
+                            </div>
+                        </div>
+                        <h4>Full AI Result:</h4>
+                        <pre>${JSON.stringify(data.aiResult, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ AI Test Failed: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function checkReviews() {
+            const resultDiv = document.getElementById('reviewCheck');
+            resultDiv.innerHTML = '<div class="info">Checking database reviews...</div>';
+            
+            try {
+                const response = await fetch('/api/admin/check-reviews');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Found ${data.stats.total} reviews in database</div>
+                        <div class="stats">
+                            <div class="stat">
+                                <h3>Total Reviews</h3>
+                                <div class="number">${data.stats.total}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>With AI Analysis</h3>
+                                <div class="number">${data.stats.withAiAnalysis}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Without AI Analysis</h3>
+                                <div class="number">${data.stats.withoutAiAnalysis}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Gemini 2.0 Flash</h3>
+                                <div class="number">${data.stats.gemini2Flash}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Old Models</h3>
+                                <div class="number">${data.stats.oldModels}</div>
+                            </div>
+                        </div>
+                        <h4>Recent Reviews:</h4>
+                        <pre>${JSON.stringify(data.reviews.slice(0, 5), null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Failed to check reviews: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function reanalyzeAll() {
+            const resultDiv = document.getElementById('reanalysis');
+            resultDiv.innerHTML = '<div class="info">Starting re-analysis of all reviews...</div>';
+            
+            try {
+                const response = await fetch('/api/admin/reanalyze-reviews', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ ${data.message}</div>
+                        <div class="stats">
+                            <div class="stat">
+                                <h3>Total Found</h3>
+                                <div class="number">${data.summary.total}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Successfully Analyzed</h3>
+                                <div class="number">${data.summary.analyzed}</div>
+                            </div>
+                            <div class="stat">
+                                <h3>Failed</h3>
+                                <div class="number">${data.summary.failed}</div>
+                            </div>
+                        </div>
+                        <h4>Analysis Results:</h4>
+                        <pre>${JSON.stringify(data.results, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Re-analysis failed: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

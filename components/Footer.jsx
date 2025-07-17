@@ -102,12 +102,12 @@ const Footer = () => {
             <h4 className="text-xl font-semibold text-white border-b border-teal-600 pb-2">Quick Links</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
+                <Link href="/About" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
                   <span className="mr-2 group-hover:translate-x-1 transition-transform duration-200">→</span>About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
+                <Link href="/Contact" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
                   <span className="mr-2 group-hover:translate-x-1 transition-transform duration-200">→</span>Contact
                 </Link>
               </li>
@@ -132,7 +132,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
+                <Link href="/Faq" className="text-teal-100 hover:text-white transition-colors duration-300 flex items-center group">
                   <span className="mr-2 group-hover:translate-x-1 transition-transform duration-200">→</span>FAQs
                 </Link>
               </li>
