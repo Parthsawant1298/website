@@ -272,6 +272,44 @@ const reviewSchema = new mongoose.Schema({
     },
     modelVersion: String
   },
+  // NEW: AI Agent Approval System
+  agentApproval: {
+    agentDecision: {
+      type: String,
+      enum: ['approve', 'reject', 'manual_review'],
+      default: 'manual_review'
+    },
+    displayIndicator: {
+      type: String,
+      enum: ['green', 'yellow', 'red'],
+      default: 'yellow'
+    },
+    userDisplayStatus: {
+      type: String,
+      enum: ['Verified Genuine', 'Under Review', 'Flagged Suspicious', 'Needs Attention'],
+      default: 'Under Review'
+    },
+    agentConfidence: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5
+    },
+    agentReasoning: String,
+    processedAt: {
+      type: Date,
+      default: Date.now
+    },
+    agentModelVersion: {
+      type: String,
+      default: 'gemini-2.0-flash-agent'
+    },
+    adminNotes: String,
+    isAutomatedDecision: {
+      type: Boolean,
+      default: true
+    }
+  },
   // Review Status
   status: {
     type: String,

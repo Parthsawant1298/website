@@ -137,7 +137,7 @@ export default function Header() {
            <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
            <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
          </svg>
-         <span className="font-poppins tracking-tight">KonceptServices</span>
+         <span className="font-poppins tracking-tight">HomeServices</span>
        </Link>
        
        {/* Main navigation */}

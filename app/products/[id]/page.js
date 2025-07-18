@@ -21,6 +21,31 @@ import {
 import { useRouter } from "next/navigation"
 import { use, useEffect, useRef, useState } from "react"
 
+// Simple chart components for analytics display
+const SimpleBarChart = ({ data, title, className = "" }) => {
+  const maxValue = Math.max(...data.map(item => item.value))
+  
+  return (
+    <div className={`space-y-2 ${className}`}>
+      <h4 className="text-sm font-medium text-gray-700">{title}</h4>
+      <div className="space-y-1">
+        {data.map((item, index) => (
+          <div key={index} className="flex items-center space-x-2">
+            <span className="text-xs text-gray-600 w-16 text-right">{item.label}</span>
+            <div className="flex-1 bg-gray-200 rounded-full h-3 relative">
+              <div 
+                className={`h-3 rounded-full ${item.color || 'bg-blue-500'}`}
+                style={{ width: `${(item.value / maxValue) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-700 w-8">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductDetailPage({ params }) {
   const router = useRouter()
   // Use React.use() to unwrap params
@@ -53,6 +78,10 @@ export default function ProductDetailPage({ params }) {
   const [reviewImages, setReviewImages] = useState([])
   const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [imageUploadError, setImageUploadError] = useState("")
+
+  // NEW: Product analytics state for AI agent results
+  const [productAnalytics, setProductAnalytics] = useState(null)
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -99,6 +128,7 @@ export default function ProductDetailPage({ params }) {
     const fetchReviews = async () => {
       try {
         setIsLoadingReviews(true)
+        setIsLoadingAnalytics(true)
         const response = await fetch(`/api/products/${id}/reviews`)
         const data = await response.json()
 
@@ -107,6 +137,33 @@ export default function ProductDetailPage({ params }) {
         }
 
         setReviews(data.reviews)
+
+        // ALWAYS generate analytics from reviews data with AI analysis
+        // This ensures your AI agent logic is always connected and working
+        console.log('Reviews data:', data.reviews) // Debug log
+        updateAnalytics(data.reviews)
+        
+        // Optional: Try to fetch additional analytics from API but ALWAYS regenerate for 2-category system
+        try {
+          const analyticsResponse = await fetch(`/api/products/${id}/analytics`)
+          if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json()
+            if (analyticsData.success && analyticsData.data) {
+              console.log('API Analytics data:', analyticsData.data) // Debug log
+              // Merge API data but ALWAYS regenerate reviewAuthenticity for 2-category system
+              const mergedAnalytics = generateBasicAnalytics(data.reviews)
+              // Keep API data for other metrics but use our 2-category system for bar graph
+              mergedAnalytics.avgConfidence = analyticsData.data.avgConfidence
+              mergedAnalytics.avgAuthenticityScore = analyticsData.data.avgAuthenticityScore
+              mergedAnalytics.lastUpdated = analyticsData.data.lastUpdated
+              setProductAnalytics(mergedAnalytics)
+            }
+          }
+        } catch (analyticsError) {
+          console.error("Analytics API error (using fallback):", analyticsError)
+        } finally {
+          setIsLoadingAnalytics(false)
+        }
 
         // TEMPORARILY DISABLED FOR ML TESTING
         // Remove this comment and uncomment below code when ready for production
@@ -124,6 +181,7 @@ export default function ProductDetailPage({ params }) {
       } catch (error) {
         console.error("Fetch reviews error:", error)
         setReviewsError("Failed to load reviews. Please try again.")
+        setIsLoadingAnalytics(false)
       } finally {
         setIsLoadingReviews(false)
       }
@@ -134,6 +192,213 @@ export default function ProductDetailPage({ params }) {
       fetchReviews()
     }
   }, [id, loadAttempts]) // Re-run when loadAttempts changes for retry logic
+
+  // NEW: Generate basic analytics from reviews when API is not available
+  const generateBasicAnalytics = (reviewsData) => {
+    console.log('Generating analytics for', reviewsData.length, 'reviews') // Debug log
+    
+    const analytics = {
+      totalReviews: reviewsData.length,
+      displayedReviews: reviewsData.length,
+      hiddenReviews: 0,
+      genuine: 0,
+      suspicious: 0,
+      pending: 0,
+      greenIndicator: 0,
+      yellowIndicator: 0,
+      redIndicator: 0,
+      verifiedPurchasers: 0,
+      unverifiedUsers: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      trustScore: '0',
+      reliabilityPercentage: '0',
+      chartData: {
+        trustDistribution: [],
+        purchaseVerification: [],
+        ratingBreakdown: [],
+        // NEW: Simplified 2-category analysis
+        reviewAuthenticity: []
+      }
+    }
+
+    reviewsData.forEach((review, index) => {
+      console.log(`Review ${index + 1}:`, {
+        rating: review.rating,
+        hasAIAnalysis: !!review.aiAnalysis,
+        classification: review.aiAnalysis?.classification,
+        verifiedPurchase: review.verifiedPurchase || review.hasPurchased
+      }) // Debug log
+      
+      // Count ratings
+      if (review.rating >= 1 && review.rating <= 5) {
+        analytics.ratingDistribution[review.rating]++
+      }
+
+      // Count purchase verification
+      if (review.verifiedPurchase || review.hasPurchased) {
+        analytics.verifiedPurchasers++
+      } else {
+        analytics.unverifiedUsers++
+      }
+
+      // Count AI analysis results - Your AI Agent Logic (Fixed for better detection)
+      if (review.aiAnalysis) {
+        console.log(`Review ${index + 1} AI Analysis:`, review.aiAnalysis) // Enhanced debug
+        
+        // Check classification first
+        if (review.aiAnalysis.classification === 'genuine') {
+          analytics.genuine++
+          analytics.greenIndicator++
+        } else if (review.aiAnalysis.classification === 'suspicious') {
+          analytics.suspicious++
+          analytics.redIndicator++
+        } else {
+          // Check agentApproval if classification is unclear
+          if (review.aiAnalysis.agentApproval) {
+            const indicator = review.aiAnalysis.agentApproval.displayIndicator
+            if (indicator === 'green') {
+              analytics.genuine++
+              analytics.greenIndicator++
+            } else if (indicator === 'red') {
+              analytics.suspicious++
+              analytics.redIndicator++
+            } else {
+              // Yellow or pending
+              analytics.suspicious++
+              analytics.redIndicator++
+            }
+          } else {
+            // No clear classification, count as suspicious
+            analytics.suspicious++
+            analytics.redIndicator++
+          }
+        }
+      } else {
+        // Reviews without AI analysis count as suspicious until analyzed
+        analytics.suspicious++
+        analytics.redIndicator++
+      }
+    })
+
+    // Calculate average rating
+    let totalRating = 0;
+    let ratingCount = 0;
+    reviewsData.forEach(review => {
+      if (review.rating >= 1 && review.rating <= 5) {
+        totalRating += review.rating;
+        ratingCount++;
+      }
+    });
+    analytics.averageRating = ratingCount > 0 ? (totalRating / ratingCount) : 0;
+
+    // Calculate percentages for 2-category system
+    const genuinePercentage = analytics.totalReviews > 0 ? 
+      ((analytics.genuine / analytics.totalReviews) * 100).toFixed(1) : '0';
+    const suspiciousPercentage = analytics.totalReviews > 0 ? 
+      ((analytics.suspicious / analytics.totalReviews) * 100).toFixed(1) : '0';
+
+    // Calculate trust score (genuine percentage)
+    analytics.trustScore = genuinePercentage;
+    
+    analytics.reliabilityPercentage = analytics.totalReviews > 0 ? 
+      ((analytics.verifiedPurchasers / analytics.totalReviews) * 100).toFixed(1) : '0'
+
+    // Generate chart data with simplified 2-category system
+    analytics.chartData = {
+      trustDistribution: [
+        { name: 'Verified Genuine', value: analytics.greenIndicator, color: '#10B981' },
+        { name: 'Needs Review', value: analytics.yellowIndicator, color: '#F59E0B' },
+        { name: 'Suspicious', value: analytics.redIndicator, color: '#EF4444' }
+      ],
+      purchaseVerification: [
+        { name: 'Verified Buyers', value: analytics.verifiedPurchasers, color: '#10B981' },
+        { name: 'Unverified Users', value: analytics.unverifiedUsers, color: '#6B7280' }
+      ],
+      ratingBreakdown: Object.entries(analytics.ratingDistribution).map(([rating, count]) => ({
+        rating: `${rating} Star`,
+        count: count,
+        percentage: analytics.totalReviews > 0 ? ((count / analytics.totalReviews) * 100).toFixed(1) : 0
+      })),
+      // NEW: Simplified 2-category authenticity chart
+      reviewAuthenticity: [
+        {
+          name: 'Genuine Reviews',
+          count: analytics.genuine,
+          percentage: genuinePercentage,
+          color: '#10B981' // Green
+        },
+        {
+          name: 'Suspicious Reviews',
+          count: analytics.suspicious,
+          percentage: suspiciousPercentage,
+          color: '#EF4444' // Red
+        }
+      ]
+    }
+
+    console.log('Final analytics:', {
+      totalReviews: analytics.totalReviews,
+      genuine: analytics.genuine,
+      suspicious: analytics.suspicious,
+      trustScore: analytics.trustScore,
+      greenIndicator: analytics.greenIndicator,
+      redIndicator: analytics.redIndicator,
+      chartData: analytics.chartData.reviewAuthenticity
+    }) // Debug log
+
+    // ENSURE bar graph data always exists even if values are 0
+    if (!analytics.chartData.reviewAuthenticity || analytics.chartData.reviewAuthenticity.length === 0) {
+      console.log('Forcing bar graph creation with current values')
+      analytics.chartData.reviewAuthenticity = [
+        {
+          name: 'Genuine Reviews',
+          count: analytics.genuine,
+          percentage: genuinePercentage,
+          color: '#10B981' // Green
+        },
+        {
+          name: 'Suspicious Reviews',
+          count: analytics.suspicious,
+          percentage: suspiciousPercentage,
+          color: '#EF4444' // Red
+        }
+      ]
+    }
+
+    return analytics;
+  }
+
+  // Call setProductAnalytics to update state
+  const updateAnalytics = (reviewsData) => {
+    setProductAnalytics(generateBasicAnalytics(reviewsData));
+  }
+
+  // NEW: Get color indicator for review display
+  const getReviewIndicator = (review) => {
+    if (!review.aiAnalysis) return { color: 'yellow', status: 'Pending Review', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', borderColor: 'border-yellow-200' }
+    
+    if (review.aiAnalysis.agentApproval) {
+      const indicator = review.aiAnalysis.agentApproval.displayIndicator
+      switch (indicator) {
+        case 'green':
+          return { color: 'green', status: 'Verified Genuine', bgColor: 'bg-green-50', textColor: 'text-green-800', borderColor: 'border-green-200' }
+        case 'red':
+          return { color: 'red', status: 'Suspicious', bgColor: 'bg-red-50', textColor: 'text-red-800', borderColor: 'border-red-200' }
+        case 'yellow':
+        default:
+          return { color: 'yellow', status: 'Needs Review', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', borderColor: 'border-yellow-200' }
+      }
+    }
+    
+    // Fallback based on classification
+    if (review.aiAnalysis.classification === 'genuine') {
+      return { color: 'green', status: 'Verified Genuine', bgColor: 'bg-green-50', textColor: 'text-green-800', borderColor: 'border-green-200' }
+    } else if (review.aiAnalysis.classification === 'suspicious') {
+      return { color: 'red', status: 'Suspicious', bgColor: 'bg-red-50', textColor: 'text-red-800', borderColor: 'border-red-200' }
+    } else {
+      return { color: 'yellow', status: 'Pending Review', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', borderColor: 'border-yellow-200' }
+    }
+  }
 
   // Check if user is logged in
   const checkAuth = async () => {
@@ -321,7 +586,12 @@ export default function ProductDetailPage({ params }) {
       }
 
       // Add the new review to the reviews list
-      setReviews((prevReviews) => [data.review, ...prevReviews])
+      setReviews((prevReviews) => {
+        const updatedReviews = [data.review, ...prevReviews];
+        // Recalculate analytics in real-time with the new review
+        updateAnalytics(updatedReviews);
+        return updatedReviews;
+      })
 
       // Update product rating
       setProduct((prevProduct) => ({
@@ -777,43 +1047,61 @@ export default function ProductDetailPage({ params }) {
                     <div className="md:w-1/3 mb-6 md:mb-0">
                       <div className="text-center">
                         <div className="text-5xl font-bold text-gray-900 mb-2">
-                          {product.ratings?.toFixed(1) || "0.0"}
+                          {productAnalytics && productAnalytics.averageRating !== undefined ? productAnalytics.averageRating.toFixed(1) : "0.0"}
                         </div>
                         <div className="flex justify-center text-yellow-400 mb-2">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
                               size={20}
-                              fill={i < Math.floor(product.ratings || 0) ? "currentColor" : "none"}
+                              fill={i < Math.floor(productAnalytics?.averageRating || 0) ? "currentColor" : "none"}
                               stroke="currentColor"
                             />
                           ))}
                         </div>
-                        <div className="text-sm text-gray-500">Based on {product.numReviews || 0} reviews</div>
+                        <div className="text-sm text-gray-500">
+                          Based on {productAnalytics && productAnalytics.totalReviews !== undefined ? productAnalytics.totalReviews : 0} reviews
+                        </div>
                       </div>
                     </div>
-
-                    <div className="md:w-2/3 md:pl-8 md:border-l border-gray-200">
-                      <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
-                      {[5, 4, 3, 2, 1].map((star) => {
-                        const count = reviews.filter((review) => review.rating === star).length
-                        const percentage = product.numReviews ? Math.round((count / product.numReviews) * 100) : 0
-
-                        return (
-                          <div key={star} className="flex items-center mb-2">
-                            <div className="flex items-center w-16"><span className="text-sm font-medium mr-2">{star}</span>
-                              <Star size={14} className="text-yellow-400" fill="currentColor" />
-                            </div>
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-yellow-400 rounded-full"
-                                style={{ width: `${percentage}%` }}
-                              ></div>
-                            </div>
-                            <div className="w-16 text-right text-sm text-gray-500">{percentage}%</div>
-                          </div>
-                        )
-                      })}
+                    
+                    {/* Rating Distribution */}
+                    <div className="md:w-2/3 md:pl-8">
+                      <h4 className="font-medium text-gray-900 mb-4">Rating Distribution</h4>
+                      {productAnalytics && productAnalytics.chartData && productAnalytics.chartData.ratingBreakdown ? (
+                        <div className="space-y-2">
+                          {[5, 4, 3, 2, 1].map((rating) => {
+                            const ratingData = productAnalytics.chartData.ratingBreakdown.find(
+                              item => item.rating === `${rating} Star`
+                            ) || { count: 0, percentage: 0 };
+                            
+                            return (
+                              <div key={rating} className="flex items-center">
+                                <div className="flex items-center w-16">
+                                  <span className="text-sm text-gray-600 mr-1">{rating}</span>
+                                  <Star size={14} className="text-yellow-400" fill="currentColor" />
+                                </div>
+                                <div className="flex-1 mx-3">
+                                  <div className="bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                                      style={{
+                                        width: `${ratingData.percentage}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2 w-20">
+                                  <span className="text-sm text-gray-600">{ratingData.count}</span>
+                                  <span className="text-xs text-gray-500">({ratingData.percentage}%)</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">No rating data available</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -962,6 +1250,133 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 )}
 
+                {/* Simplified Bar Graph Only - No Analytics Overview Cards */}
+                {!isLoadingAnalytics && productAnalytics && (
+                  <div className="mb-8 pb-8 border-b border-gray-200">
+                    <div className="bg-white p-6 rounded-lg border border-gray-200">
+                      <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                        <Shield size={18} className="mr-2 text-teal-600" />
+                        Review Authenticity Analysis
+                        {/* Debug info */}
+                        <span className="ml-2 text-xs text-gray-500">
+                          (Total: {productAnalytics.totalReviews || 0}, 
+                          Genuine: {productAnalytics.genuine || 0}, 
+                          Suspicious: {productAnalytics.suspicious || 0})
+                        </span>
+                      </h4>
+                      
+                      {productAnalytics.chartData?.reviewAuthenticity && productAnalytics.chartData.reviewAuthenticity.length > 0 ? (
+                        <div className="space-y-4">
+                          {productAnalytics.chartData.reviewAuthenticity.map((item, index) => (
+                            <div key={index} className="flex items-center">
+                              <div className="flex items-center w-32">
+                                <div 
+                                  className="w-4 h-4 rounded-full mr-3"
+                                  style={{ backgroundColor: item.color }}
+                                ></div>
+                                <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                              </div>
+                              <div className="flex-1 mx-4">
+                                <div className="bg-gray-200 rounded-full h-6">
+                                  <div
+                                    className="h-6 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                                    style={{
+                                      backgroundColor: item.color,
+                                      width: `${Math.max(parseFloat(item.percentage) || 0, 5)}%` // Ensure minimum 5% width
+                                    }}
+                                  >
+                                    <span className="text-white text-xs font-medium">
+                                      {item.percentage}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2 w-16">
+                                <span className="text-sm font-bold text-gray-800">{item.count}</span>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Real-time Update Indicator */}
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>
+                                <AlertTriangle size={12} className="inline mr-1" />
+                                Updates automatically with new reviews
+                              </span>
+                              <span>Total: {productAnalytics.totalReviews} reviews analyzed</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-gray-500">
+                          <Shield size={24} className="mx-auto mb-2 text-gray-300" />
+                          <p className="text-sm">
+                            {productAnalytics.totalReviews === 0 
+                              ? "No reviews available for analysis" 
+                              : `${productAnalytics.totalReviews} reviews found, AI analysis in progress...`
+                            }
+                          </p>
+                          {/* Force show basic bar if we have reviews but no chart data */}
+                          {productAnalytics.totalReviews > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <div className="flex items-center">
+                                <div className="flex items-center w-32">
+                                  <div className="w-4 h-4 rounded-full mr-3 bg-green-500"></div>
+                                  <span className="text-sm font-medium text-gray-700">Genuine Reviews</span>
+                                </div>
+                                <div className="flex-1 mx-4">
+                                  <div className="bg-gray-200 rounded-full h-6">
+                                    <div
+                                      className="h-6 rounded-full bg-green-500 flex items-center justify-end pr-2"
+                                      style={{ width: `${Math.max((productAnalytics.genuine / productAnalytics.totalReviews) * 100, 5)}%` }}
+                                    >
+                                      <span className="text-white text-xs font-medium">
+                                        {((productAnalytics.genuine / productAnalytics.totalReviews) * 100).toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="w-16">
+                                  <span className="text-sm font-bold text-gray-800">{productAnalytics.genuine}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="flex items-center w-32">
+                                  <div className="w-4 h-4 rounded-full mr-3 bg-red-500"></div>
+                                  <span className="text-sm font-medium text-gray-700">Suspicious Reviews</span>
+                                </div>
+                                <div className="flex-1 mx-4">
+                                  <div className="bg-gray-200 rounded-full h-6">
+                                    <div
+                                      className="h-6 rounded-full bg-red-500 flex items-center justify-end pr-2"
+                                      style={{ width: `${Math.max((productAnalytics.suspicious / productAnalytics.totalReviews) * 100, 5)}%` }}
+                                    >
+                                      <span className="text-white text-xs font-medium">
+                                        {((productAnalytics.suspicious / productAnalytics.totalReviews) * 100).toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="w-16">
+                                  <span className="text-sm font-bold text-gray-800">{productAnalytics.suspicious}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {/* Debug: Show raw analytics data */}
+                          <details className="mt-2 text-xs">
+                            <summary className="cursor-pointer">Debug Info</summary>
+                            <pre className="bg-gray-100 p-2 rounded mt-1 text-left overflow-auto">
+                              {JSON.stringify(productAnalytics, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Reviews List */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -991,87 +1406,83 @@ export default function ProductDetailPage({ params }) {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {reviews.map((review) => (
-                        <div key={review._id} className="border-b border-gray-100 pb-6 last:border-0">
-                          <div className="flex items-center mb-2">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 mr-3">
-                              {review.user.profilePicture ? (
-                                <img
-                                  src={review.user.profilePicture || "/placeholder.svg"}
-                                  alt={review.user.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <User size={20} className="text-gray-500" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <p className="font-medium text-gray-900">{review.user.name}</p>
-                                {review.aiAnalysis && review.aiAnalysis.classification === 'genuine' && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <Shield size={10} className="mr-1" />
-                                    Verified
-                                  </span>
-                                )}
+                      {reviews.map((review) => {
+                        const indicator = getReviewIndicator(review)
+                        return (
+                          <div key={review._id} className={`border-b border-gray-100 pb-6 last:border-0 relative ${indicator.bgColor} ${indicator.borderColor} border rounded-lg p-4`}>
+                            {/* NEW: AI Status Indicator Badge */}
+                            <div className="absolute top-2 right-2">
+                              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${indicator.bgColor} ${indicator.textColor} border ${indicator.borderColor}`}>
+                                {indicator.color === 'green' && <Shield size={10} className="mr-1" />}
+                                {indicator.color === 'red' && <AlertTriangle size={10} className="mr-1" />}
+                                {indicator.color === 'yellow' && <Info size={10} className="mr-1" />}
+                                {indicator.status}
                               </div>
-                              <p className="text-xs text-gray-500">{formatDate(review.createdAt)}</p>
                             </div>
 
-                            {review.verifiedPurchase && (
-                              <div className="ml-auto bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full flex items-center">
-                                <Check size={12} className="mr-1" />
-                                Verified Purchase
+                            <div className="flex items-center mb-2">
+                              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 mr-3">
+                                {review.user.profilePicture ? (
+                                  <img
+                                    src={review.user.profilePicture || "/placeholder.svg"}
+                                    alt={review.user.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <User size={20} className="text-gray-500" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 mr-20">
+                                <div className="flex items-center space-x-2">
+                                  <p className="font-medium text-gray-900">{review.user.name}</p>
+                                  {(review.verifiedPurchase || review.hasPurchased) && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      <Check size={10} className="mr-1" />
+                                      Verified Purchase
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500">{formatDate(review.createdAt)}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex mb-2">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={16}
+                                  className="text-yellow-400"
+                                  fill={i < review.rating ? "currentColor" : "none"}
+                                />
+                              ))}
+                            </div>
+
+                            <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
+                            
+                            {/* Review Images */}
+                            {review.images && review.images.length > 0 && (
+                              <div className="mt-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                  {review.images.map((image, index) => (
+                                    <img
+                                      key={index}
+                                      src={image.url}
+                                      alt={`Review image ${index + 1}`}
+                                      className="w-full h-24 sm:h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-75 transition-opacity"
+                                      onClick={() => {
+                                        // Optional: Add image lightbox/modal functionality here
+                                        window.open(image.url, '_blank');
+                                      }}
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
-
-                          <div className="flex mb-2">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={16}
-                                className="text-yellow-400"
-                                fill={i < review.rating ? "currentColor" : "none"}
-                              />
-                            ))}
-                          </div>
-
-                          <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
-                          
-                          {/* Review Images */}
-                          {review.images && review.images.length > 0 && (
-                            <div className="mt-3">
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {review.images.map((image, index) => (
-                                  <img
-                                    key={index}
-                                    src={image.url}
-                                    alt={`Review image ${index + 1}`}
-                                    className="w-full h-24 sm:h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-75 transition-opacity"
-                                    onClick={() => {
-                                      // Optional: Add image lightbox/modal functionality here
-                                      window.open(image.url, '_blank');
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* AI Analysis Info (visible only if flagged or for admins) */}
-                          {review.aiAnalysis && review.aiAnalysis.classification === 'suspicious' && (
-                            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-                              <div className="flex items-center text-xs text-yellow-800">
-                                <AlertTriangle size={12} className="mr-1" />
-                                This review has been flagged for verification
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -1118,6 +1529,14 @@ export default function ProductDetailPage({ params }) {
             )}
           </div>
         </div>
+
+
+
+
+
+
+
+
 
         {/* Related Products Section */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (

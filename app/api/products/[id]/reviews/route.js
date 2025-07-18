@@ -1,12 +1,12 @@
 // app/api/products/[id]/reviews/route.js
-import connectDB from '@/lib/mongodb';
-import ReviewAnalysisService from '@/lib/reviewAnalysis';
-import Order from '@/models/order';
-import Product from '@/models/product';
-import Review from '@/models/review';
-import User from '@/models/user';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import connectDB from '../../../../../lib/mongodb';
+import { processReviewComplete } from '../../../../../lib/reviewAnalysis';
+import Order from '../../../../../models/order';
+import Product from '../../../../../models/product';
+import Review from '../../../../../models/review';
+import User from '../../../../../models/user';
 
 // GET reviews for a specific product
 export async function GET(request, context) {
@@ -122,13 +122,23 @@ export async function POST(request, context) {
     
     let hasPurchased = false;
     let purchaseDate = null;
+    let daysBetween = null;
     
     if (purchaseRecord) {
       hasPurchased = true;
       purchaseDate = purchaseRecord.createdAt;
+      
+      // Calculate days between purchase and review
+      const purchaseDateObj = new Date(purchaseDate);
+      const reviewDateObj = new Date();
+      const diffTime = Math.abs(reviewDateObj - purchaseDateObj);
+      daysBetween = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
       console.log('Purchase verified! Order found:', purchaseRecord._id, 'Date:', purchaseDate);
+      console.log('Days between purchase and review:', daysBetween);
     } else {
       console.log('No purchase record found for this user-product combination');
+      daysBetween = 'N/A';
     }
     
     // Create new review
@@ -141,65 +151,38 @@ export async function POST(request, context) {
       ...(images && images.length > 0 && { images })
     };
 
-    // Initialize ML analysis service
-    const analysisService = new ReviewAnalysisService();
-    
-    // Analyze the review with complete context including purchase verification
-    // Get ML analysis with enhanced purchase verification data
+    // Use AI agent for complete analysis and approval
     console.log('🔍 Purchase verification status before AI analysis:');
     console.log('- hasPurchased:', hasPurchased);
     console.log('- purchaseDate:', purchaseDate);
+    console.log('- daysBetween:', daysBetween);
     console.log('- purchaseRecord ID:', purchaseRecord?._id);
     console.log('- hasImages:', !!(images && images.length > 0));
     console.log('- imageCount:', images?.length || 0);
     
-    let mlAnalysis;
-    
-    // Use image analysis if images are provided
-    if (images && images.length > 0) {
-      console.log('🖼️ Using image analysis for review with', images.length, 'images');
-      
-      // For now, we'll analyze with the first image (can be enhanced to analyze multiple)
-      // Convert the first image URL to base64 if needed, or use the URL directly
-      // Note: For this implementation, we'll pass the image URL to the analysis service
-      mlAnalysis = await analysisService.analyzeReviewWithImage({
-        comment,
-        rating,
-        productName: product.name,
-        productDescription: product.description,
-        productCategory: product.category,
-        productPrice: `₹${product.price}`,
-        hasPurchased: hasPurchased,
-        purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
-        reviewDate: new Date().toISOString()
-      }, images[0]?.url); // Pass the first image URL for analysis
-    } else {
-      console.log('📝 Using text-only analysis (no images)');
-      mlAnalysis = await analysisService.analyzeReview({
-        comment,
-        rating,
-        productName: product.name,
-        productDescription: product.description,
-        productCategory: product.category,
-        productPrice: `₹${product.price}`,
-        hasPurchased: hasPurchased,
-        purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
-        reviewDate: new Date().toISOString()
-      });
-    }
-    
-    console.log('🤖 AI Analysis Result:');
-    console.log('- Classification:', mlAnalysis.classification);
-    console.log('- Flags:', mlAnalysis.flags);
-    console.log('- Has no_purchase_record flag:', mlAnalysis.flags?.includes('no_purchase_record'));
-    console.log('- Has unverified_reviewer flag:', mlAnalysis.flags?.includes('unverified_reviewer'));
-
-    // Create review with ML analysis
-    const review = await Review.create({
+    // Process review with AI agent (includes analysis + approval)
+    const processedReview = await processReviewComplete({
       ...reviewData,
-      aiAnalysis: mlAnalysis,
-      status: mlAnalysis.classification === 'suspicious' ? 'flagged' : 'published'
+      hasPurchased,
+      purchaseDate,
+      daysBetween
     });
+    
+    console.log('🤖 AI Agent Processing Complete:');
+    console.log('- Classification:', processedReview.classification);
+    console.log('- Agent Decision:', processedReview.agentApproval?.agentDecision);
+    console.log('- Display Indicator:', processedReview.agentApproval?.displayIndicator);
+
+    // Create review with AI analysis and agent approval
+    const review = new Review({
+      ...reviewData,
+      aiAnalysis: processedReview,
+      agentApproval: processedReview.agentApproval,
+      createdAt: new Date()
+    });
+
+    // Save the review
+    await review.save();
     
     // Get the populated review
     const populatedReview = await Review.findById(review._id)
@@ -210,7 +193,7 @@ export async function POST(request, context) {
     
     return NextResponse.json({
       success: true,
-      message: 'Review added successfully',
+      message: 'Review added successfully with AI analysis',
       review: populatedReview
     }, { status: 201 });
     

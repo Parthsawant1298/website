@@ -155,16 +155,16 @@ const Footer = () => {
               <div className="flex items-center space-x-3 text-teal-100 group">
                 <Mail size={18} className="group-hover:text-white" />
                 <a 
-                  href="mailto:contact@konceptservices.com" 
+                  href="mailto:contact@Homeservices.com" 
                   className="group-hover:text-white transition-colors duration-300"
                 >
-                  contact@konceptservices.com
+                  contact@Homeservices.com
                 </a>
               </div>
               <div className="flex items-start space-x-3 text-teal-100 group">
                 <MapPin size={18} className="group-hover:text-white mt-1 flex-shrink-0" />
                 <span className="group-hover:text-white transition-colors duration-300">
-                  456 Business Hub, Corporate Park,<br />
+                  230 Business Hub, Corporate Park,<br />
                   Delhi NCR - 110001
                 </span>
               </div>

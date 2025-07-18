@@ -1,9 +1,7 @@
 // app/api/products/[id]/available/route.js
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import connectDB from '@/lib/mongodb';
-import Product from '@/models/product';
-import Cart from '@/models/cart';
+import connectDB from '../../../../../lib/mongodb';
+import Product from '../../../../../models/product';
 
 export async function GET(request, context) {
   try {

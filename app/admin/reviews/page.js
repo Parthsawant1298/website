@@ -2,7 +2,6 @@
 
 import AdminNavbar from "@/components/AdminNavbar"
 import {
-    Activity,
     AlertCircle,
     AlertTriangle,
     Brain,
@@ -36,7 +35,6 @@ export default function AdminReviewsPage() {
   const [filters, setFilters] = useState({
     status: 'all',
     classification: 'all',
-    needsReview: 'false',
     search: ''
   })
   const [pagination, setPagination] = useState({
@@ -52,7 +50,7 @@ export default function AdminReviewsPage() {
   useEffect(() => {
     checkAdminAuth()
     fetchReviews()
-  }, [filters.status, filters.classification, filters.needsReview, pagination.currentPage])
+  }, [filters.status, filters.classification, pagination.currentPage])
 
   const checkAdminAuth = async () => {
     try {
@@ -74,7 +72,6 @@ export default function AdminReviewsPage() {
       const params = new URLSearchParams({
         status: filters.status,
         classification: filters.classification,
-        needsReview: filters.needsReview,
         page: pagination.currentPage.toString(),
         limit: '20'
       })
@@ -231,20 +228,6 @@ export default function AdminReviewsPage() {
     )
   }
 
-  const getScoreColor = (score) => {
-    if (score >= 0.8) return 'text-green-600'
-    if (score >= 0.6) return 'text-yellow-600'
-    if (score >= 0.4) return 'text-orange-600'
-    return 'text-red-600'
-  }
-
-  const getScoreBg = (score) => {
-    if (score >= 0.8) return 'bg-green-100'
-    if (score >= 0.6) return 'bg-yellow-100'
-    if (score >= 0.4) return 'bg-orange-100'
-    return 'bg-red-100'
-  }
-
   const toggleExpandedReview = (reviewId) => {
     const newExpanded = new Set(expandedReviews)
     if (newExpanded.has(reviewId)) {
@@ -360,18 +343,18 @@ export default function AdminReviewsPage() {
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="p-3 bg-yellow-100 rounded-lg">
-                      <Eye className="text-yellow-600" size={24} />
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <Eye className="text-blue-600" size={24} />
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-500">Need Review</p>
-                      <p className="text-2xl font-bold text-gray-900">{analytics.flaggedForManualReview || 0}</p>
+                      <p className="text-sm font-medium text-gray-500">Processed</p>
+                      <p className="text-2xl font-bold text-gray-900">{analytics.totalReviews || 0}</p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 bg-yellow-50 rounded-lg p-3">
-                  <p className="text-xs text-yellow-700">
-                    High-priority manual reviews
+                <div className="mt-4 bg-blue-50 rounded-lg p-3">
+                  <p className="text-xs text-blue-700">
+                    Automatically processed by AI
                   </p>
                 </div>
               </div>
@@ -398,24 +381,6 @@ export default function AdminReviewsPage() {
                       </span>
                       <span className="font-bold text-purple-900 text-lg">
                         {(parseFloat(analytics.avgConfidence || 0) * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-purple-700 flex items-center">
-                        <Activity className="mr-2" size={14} />
-                        Avg Sentiment
-                      </span>
-                      <span className="font-bold text-purple-900 text-lg">
-                        {(parseFloat(analytics.avgSentiment || 0.5) * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-purple-700 flex items-center">
-                        <CheckSquare className="mr-2" size={14} />
-                        Avg Authenticity
-                      </span>
-                      <span className="font-bold text-purple-900 text-lg">
-                        {(parseFloat(analytics.avgAuthenticity || 0.5) * 100).toFixed(0)}%
                       </span>
                     </div>
                   </div>
@@ -488,15 +453,6 @@ export default function AdminReviewsPage() {
               <option value="genuine">Genuine</option>
               <option value="suspicious">Suspicious</option>
               <option value="pending">Pending Analysis</option>
-            </select>
-
-            <select
-              value={filters.needsReview}
-              onChange={(e) => setFilters(prev => ({ ...prev, needsReview: e.target.value }))}
-              className="border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-            >
-              <option value="false">All Reviews</option>
-              <option value="true">Needs Manual Review</option>
             </select>
 
             <button
@@ -615,12 +571,6 @@ export default function AdminReviewsPage() {
                               review.aiAnalysis.classification,
                               review.aiAnalysis.confidence
                             )}
-                            {review.aiAnalysis.needsManualReview && (
-                              <span className="inline-flex items-center text-sm text-red-600 bg-red-50 px-3 py-1 rounded-lg border border-red-200">
-                                <AlertCircle size={14} className="mr-1.5" />
-                                Manual Review Needed
-                              </span>
-                            )}
                           </div>
                           <span className="text-xs text-gray-500 mt-2 sm:mt-0 flex items-center">
                             <Brain size={12} className="mr-1" />
@@ -628,169 +578,8 @@ export default function AdminReviewsPage() {
                           </span>
                         </div>
 
-                        {/* Score Grid */}
-                        {(review.aiAnalysis.scores || review.aiAnalysis.sentimentScore !== undefined) && (
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                            {/* Sentiment Score */}
-                            {(() => {
-                              const sentimentScore = review.aiAnalysis.scores?.sentimentScore ?? review.aiAnalysis.sentimentScore;
-                              if (sentimentScore !== undefined) {
-                                return (
-                                  <div className={`p-3 rounded-lg border ${getScoreBg(sentimentScore)}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-medium text-gray-600">Sentiment</span>
-                                      <Activity size={14} className="text-gray-500" />
-                                    </div>
-                                    <p className={`text-lg font-bold ${getScoreColor(sentimentScore)}`}>
-                                      {(sentimentScore * 100).toFixed(0)}%
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-
-                            {/* Authenticity Score */}
-                            {(() => {
-                              const authenticityScore = review.aiAnalysis.scores?.authenticityScore ?? review.aiAnalysis.authenticityScore;
-                              if (authenticityScore !== undefined) {
-                                return (
-                                  <div className={`p-3 rounded-lg border ${getScoreBg(authenticityScore)}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-medium text-gray-600">Authenticity</span>
-                                      <CheckSquare size={14} className="text-gray-500" />
-                                    </div>
-                                    <p className={`text-lg font-bold ${getScoreColor(authenticityScore)}`}>
-                                      {(authenticityScore * 100).toFixed(0)}%
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-
-                            {/* Product Relevance Score */}
-                            {(() => {
-                              const productRelevanceScore = review.aiAnalysis.scores?.productRelevanceScore ?? review.aiAnalysis.productRelevanceScore;
-                              if (productRelevanceScore !== undefined) {
-                                return (
-                                  <div className={`p-3 rounded-lg border ${getScoreBg(productRelevanceScore)}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-medium text-gray-600">Product Match</span>
-                                      <Target size={14} className="text-gray-500" />
-                                    </div>
-                                    <p className={`text-lg font-bold ${getScoreColor(productRelevanceScore)}`}>
-                                      {(productRelevanceScore * 100).toFixed(0)}%
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-
-                            {/* Purchase Verification Score */}
-                            {(() => {
-                              const purchaseVerificationScore = review.aiAnalysis.scores?.purchaseVerificationScore ?? review.aiAnalysis.purchaseVerificationScore;
-                              if (purchaseVerificationScore !== undefined) {
-                                return (
-                                  <div className={`p-3 rounded-lg border ${getScoreBg(purchaseVerificationScore)}`}>
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs font-medium text-gray-600">Purchase Verified</span>
-                                      <ShoppingCart size={14} className="text-gray-500" />
-                                    </div>
-                                    <p className={`text-lg font-bold ${getScoreColor(purchaseVerificationScore)}`}>
-                                      {(purchaseVerificationScore * 100).toFixed(0)}%
-                                    </p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        )}
-
-                        {/* Flags */}
-                        {review.aiAnalysis.flags && review.aiAnalysis.flags.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                              <Flag size={14} className="mr-1.5 text-orange-500" />
-                              Detected Issues
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {review.aiAnalysis.flags.map((flag, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-block bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full border border-orange-200 font-medium"
-                                >
-                                  {flag.replace(/_/g, ' ').toUpperCase()}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* AI Reasoning */}
-                        {review.aiAnalysis.reasoning && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                            <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                              <Brain size={14} className="mr-1.5" />
-                              AI Analysis Summary
-                            </h4>
-                            <p className="text-sm text-blue-700 leading-relaxed">
-                              {review.aiAnalysis.reasoning}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Key Insights */}
-                        {review.aiAnalysis.keyInsights && review.aiAnalysis.keyInsights.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                              <Zap size={14} className="mr-1.5 text-yellow-500" />
-                              Key Insights
-                            </h4>
-                            <div className="space-y-2">
-                              {review.aiAnalysis.keyInsights.slice(0, 3).map((insight, index) => (
-                                <div key={index} className="flex items-start space-x-2 text-sm">
-                                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                                  <span className="text-gray-700 leading-relaxed">{insight}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Recommendations */}
-                        {review.aiAnalysis.recommendations && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                            <h4 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center">
-                              <Target size={14} className="mr-1.5" />
-                              AI Recommendation
-                            </h4>
-                            <div className="text-sm text-yellow-700">
-                              <span className="font-bold uppercase">
-                                {review.aiAnalysis.recommendations.action}
-                              </span>
-                              {review.aiAnalysis.recommendations.explanation && (
-                                <span className="ml-2">- {review.aiAnalysis.recommendations.explanation}</span>
-                              )}
-                              {review.aiAnalysis.recommendations.priority && (
-                                <div className="mt-2">
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                    review.aiAnalysis.recommendations.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                    review.aiAnalysis.recommendations.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-green-100 text-green-800'
-                                  }`}>
-                                    {review.aiAnalysis.recommendations.priority.toUpperCase()} PRIORITY
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Detailed Analysis Toggle */}
-                        {review.aiAnalysis.detailedAnalysis && (
+                        {/* View Analysis Toggle Button */}
+                        {review.aiAnalysis && (
                           <div className="border-t border-gray-200 pt-4">
                             <button 
                               onClick={() => setExpandedAnalysis(expandedAnalysis === review._id ? null : review._id)}
@@ -802,94 +591,180 @@ export default function AdminReviewsPage() {
                                 <ChevronDown size={16} />
                               )}
                               <span>
-                                {expandedAnalysis === review._id ? 'Hide' : 'Show'} Detailed AI Analysis
+                                {expandedAnalysis === review._id ? 'Hide' : 'View'} Analysis
                               </span>
                             </button>
                             
                             {expandedAnalysis === review._id && (
                               <div className="mt-4 bg-gray-50 rounded-lg border border-gray-200 p-6 space-y-6">
-                                {review.aiAnalysis.detailedAnalysis.purchaseVerificationAnalysis && (
+                                
+                                {/* Detected Issues */}
+                                {review.aiAnalysis.flags && review.aiAnalysis.flags.length > 0 && (
                                   <div>
-                                    <h5 className="font-semibold text-red-700 text-sm mb-2 flex items-center">
-                                      <ShoppingCart size={14} className="mr-2" />
-                                      Purchase Verification Analysis
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.purchaseVerificationAnalysis}
-                                    </p>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                      <Flag size={14} className="mr-1.5 text-orange-500" />
+                                      Detected Issues
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {review.aiAnalysis.flags.map((flag, index) => (
+                                        <span
+                                          key={index}
+                                          className="inline-block bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full border border-orange-200 font-medium"
+                                        >
+                                          {flag.replace(/_/g, ' ').toUpperCase()}
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
-                                
-                                {review.aiAnalysis.detailedAnalysis.productRelevanceAnalysis && (
-                                  <div>
-                                    <h5 className="font-semibold text-blue-700 text-sm mb-2 flex items-center">
-                                      <Target size={14} className="mr-2" />
-                                      Product Relevance Analysis
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.productRelevanceAnalysis}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {review.aiAnalysis.detailedAnalysis.authenticityAssessment && (
-                                  <div>
-                                    <h5 className="font-semibold text-green-700 text-sm mb-2 flex items-center">
-                                      <CheckSquare size={14} className="mr-2" />
-                                      Authenticity Assessment
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.authenticityAssessment}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {review.aiAnalysis.detailedAnalysis.linguisticAnalysis && (
-                                  <div>
-                                    <h5 className="font-semibold text-orange-700 text-sm mb-2 flex items-center">
-                                      <MessageSquare size={14} className="mr-2" />
-                                      Language Analysis
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.linguisticAnalysis}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {review.aiAnalysis.detailedAnalysis.suspiciousPatterns && (
-                                  <div>
-                                    <h5 className="font-semibold text-red-700 text-sm mb-2 flex items-center">
-                                      <AlertTriangle size={14} className="mr-2" />
-                                      Suspicious Patterns
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.suspiciousPatterns}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {review.aiAnalysis.detailedAnalysis.timelineAnalysis && (
-                                  <div>
-                                    <h5 className="font-semibold text-purple-700 text-sm mb-2 flex items-center">
-                                      <Clock size={14} className="mr-2" />
-                                      Timeline Analysis
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.timelineAnalysis}
+
+                                {/* AI Analysis Summary */}
+                                {review.aiAnalysis.reasoning && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center">
+                                      <Brain size={14} className="mr-1.5" />
+                                      AI Analysis Summary
+                                    </h4>
+                                    <p className="text-sm text-blue-700 leading-relaxed">
+                                      {review.aiAnalysis.reasoning}
                                     </p>
                                   </div>
                                 )}
 
-                                {review.aiAnalysis.detailedAnalysis.specificConcerns && (
+                                {/* Key Insights */}
+                                {review.aiAnalysis.keyInsights && review.aiAnalysis.keyInsights.length > 0 && (
                                   <div>
-                                    <h5 className="font-semibold text-gray-700 text-sm mb-2 flex items-center">
-                                      <Info size={14} className="mr-2" />
-                                      Specific Concerns
-                                    </h5>
-                                    <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
-                                      {review.aiAnalysis.detailedAnalysis.specificConcerns}
-                                    </p>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                      <Zap size={14} className="mr-1.5 text-yellow-500" />
+                                      Key Insights
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {review.aiAnalysis.keyInsights.slice(0, 3).map((insight, index) => (
+                                        <div key={index} className="flex items-start space-x-2 text-sm">
+                                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                                          <span className="text-gray-700 leading-relaxed">{insight}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
+                                )}
+
+                                {/* AI Recommendation */}
+                                {review.aiAnalysis.recommendations && (
+                                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <h4 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center">
+                                      <Target size={14} className="mr-1.5" />
+                                      AI Recommendation
+                                    </h4>
+                                    <div className="text-sm text-yellow-700">
+                                      <span className="font-bold uppercase">
+                                        {review.aiAnalysis.recommendations.action}
+                                      </span>
+                                      {review.aiAnalysis.recommendations.explanation && (
+                                        <span className="ml-2">- {review.aiAnalysis.recommendations.explanation}</span>
+                                      )}
+                                      {review.aiAnalysis.recommendations.priority && (
+                                        <div className="mt-2">
+                                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                            review.aiAnalysis.recommendations.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                            review.aiAnalysis.recommendations.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-green-100 text-green-800'
+                                          }`}>
+                                            {review.aiAnalysis.recommendations.priority.toUpperCase()} PRIORITY
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Detailed Analysis Sections */}
+                                {review.aiAnalysis.detailedAnalysis && (
+                                  <>
+                                    {review.aiAnalysis.detailedAnalysis.purchaseVerificationAnalysis && (
+                                      <div>
+                                        <h5 className="font-semibold text-red-700 text-sm mb-2 flex items-center">
+                                          <ShoppingCart size={14} className="mr-2" />
+                                          Purchase Verification Analysis
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.purchaseVerificationAnalysis}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {review.aiAnalysis.detailedAnalysis.productRelevanceAnalysis && (
+                                      <div>
+                                        <h5 className="font-semibold text-blue-700 text-sm mb-2 flex items-center">
+                                          <Target size={14} className="mr-2" />
+                                          Product Relevance Analysis
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.productRelevanceAnalysis}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {review.aiAnalysis.detailedAnalysis.authenticityAssessment && (
+                                      <div>
+                                        <h5 className="font-semibold text-green-700 text-sm mb-2 flex items-center">
+                                          <CheckSquare size={14} className="mr-2" />
+                                          Authenticity Assessment
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.authenticityAssessment}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {review.aiAnalysis.detailedAnalysis.linguisticAnalysis && (
+                                      <div>
+                                        <h5 className="font-semibold text-orange-700 text-sm mb-2 flex items-center">
+                                          <MessageSquare size={14} className="mr-2" />
+                                          Language Analysis
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.linguisticAnalysis}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {review.aiAnalysis.detailedAnalysis.suspiciousPatterns && (
+                                      <div>
+                                        <h5 className="font-semibold text-red-700 text-sm mb-2 flex items-center">
+                                          <AlertTriangle size={14} className="mr-2" />
+                                          Suspicious Patterns
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.suspiciousPatterns}
+                                        </p>
+                                      </div>
+                                    )}
+                                    
+                                    {review.aiAnalysis.detailedAnalysis.timelineAnalysis && (
+                                      <div>
+                                        <h5 className="font-semibold text-purple-700 text-sm mb-2 flex items-center">
+                                          <Clock size={14} className="mr-2" />
+                                          Timeline Analysis
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.timelineAnalysis}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {review.aiAnalysis.detailedAnalysis.specificConcerns && (
+                                      <div>
+                                        <h5 className="font-semibold text-gray-700 text-sm mb-2 flex items-center">
+                                          <Info size={14} className="mr-2" />
+                                          Specific Concerns
+                                        </h5>
+                                        <p className="text-sm text-gray-700 leading-relaxed bg-white p-3 rounded border">
+                                          {review.aiAnalysis.detailedAnalysis.specificConcerns}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
