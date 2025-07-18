@@ -128,11 +128,12 @@ export async function POST(request) {
           rating: review.rating,
           hasPurchased: hasPurchased,
           hasPurchasedType: typeof hasPurchased,
-          productName: product?.name || 'Unknown Product'
+          productName: product?.name || 'Unknown Product',
+          hasImages: review.images && review.images.length > 0
         });
 
-        // Run AI analysis with full context
-        const analysis = await analysisService.analyzeReview({
+        // Prepare analysis data
+        const analysisData = {
           comment: review.comment,
           rating: review.rating,
           user: review.user?.name || review.user?.email || 'Anonymous',
@@ -145,7 +146,25 @@ export async function POST(request) {
           productPrice: product?.price || 'Unknown Price',
           reviewDate: review.createdAt,
           reviewId: review._id
-        });
+        };
+
+        // Check if review has images and use appropriate analysis method
+        let analysis;
+        if (review.images && review.images.length > 0) {
+          console.log(`🖼️ Review has ${review.images.length} images - using image analysis`);
+          try {
+            // For reviews with images, use image analysis - pass URL string, not object
+            analysis = await analysisService.analyzeReviewWithImage(analysisData, review.images[0].url);
+          } catch (imageError) {
+            console.warn(`⚠️ Image analysis failed, falling back to text-only:`, imageError.message);
+            // Fallback to text-only analysis if image processing fails
+            analysis = await analysisService.analyzeReview(analysisData);
+          }
+        } else {
+          console.log(`📝 Review has no images - using text-only analysis`);
+          // For text-only reviews, use standard analysis
+          analysis = await analysisService.analyzeReview(analysisData);
+        }
 
         // DEBUG: Log what came back from AI analysis
         console.log(`🤖 AI Analysis Result:`, {
@@ -153,8 +172,19 @@ export async function POST(request) {
           classification: analysis.classification,
           confidence: analysis.confidence,
           scores: analysis.scores,
-          flags: analysis.flags?.slice(0, 3) // Just first 3 flags
+          flags: analysis.flags?.slice(0, 3), // Just first 3 flags
+          hasImageAnalysis: !!analysis.imageAnalysis,
+          imageProductMatch: analysis.imageAnalysis?.productMatch
         });
+
+        if (analysis.imageAnalysis) {
+          console.log(`🖼️ Image Analysis Details:`, {
+            productMatch: analysis.imageAnalysis.productMatch,
+            authenticity: analysis.imageAnalysis.authenticity,
+            quality: analysis.imageAnalysis.quality,
+            imageFlags: analysis.flags?.filter(f => f.includes('image')) || []
+          });
+        }
 
         // Update the review with AI analysis
         await Review.findByIdAndUpdate(review._id, {

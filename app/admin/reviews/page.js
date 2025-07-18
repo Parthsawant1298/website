@@ -2,27 +2,27 @@
 
 import AdminNavbar from "@/components/AdminNavbar"
 import {
-  Activity,
-  AlertCircle,
-  AlertTriangle,
-  Brain,
-  Calendar,
-  CheckCircle,
-  CheckSquare,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Eye,
-  EyeOff,
-  Flag,
-  Info,
-  MessageSquare,
-  RefreshCw,
-  Shield,
-  ShoppingCart,
-  Star,
-  Target,
-  Zap
+    Activity,
+    AlertCircle,
+    AlertTriangle,
+    Brain,
+    Calendar,
+    CheckCircle,
+    CheckSquare,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Eye,
+    EyeOff,
+    Flag,
+    Info,
+    MessageSquare,
+    RefreshCw,
+    Shield,
+    ShoppingCart,
+    Star,
+    Target,
+    Zap
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -563,6 +563,24 @@ export default function AdminReviewsPage() {
                         <p className="text-gray-700 leading-relaxed">
                           {review.comment}
                         </p>
+
+                        {/* Display review images */}
+                        {review.images && review.images.length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Review Images:</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                              {review.images.map((image, index) => (
+                                <img
+                                  key={index}
+                                  src={image.url}
+                                  alt={`Review image ${index + 1}`}
+                                  className="w-full h-24 object-cover rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                                  onClick={() => window.open(image.url, '_blank')}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 

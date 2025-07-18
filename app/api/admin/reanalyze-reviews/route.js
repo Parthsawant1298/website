@@ -84,15 +84,32 @@ export async function POST(request) {
           productPrice: `₹${review.product.price}`,
           hasPurchased: hasPurchased,
           purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
-          reviewDate: review.createdAt ? review.createdAt.toISOString() : new Date().toISOString()
+          reviewDate: review.createdAt ? review.createdAt.toISOString() : new Date().toISOString(),
+          user: review.user.name || 'Anonymous'
         };
         
         console.log(`📊 Analysis data being sent to AI:`);
         console.log(`- hasPurchased: ${analysisData.hasPurchased} (type: ${typeof analysisData.hasPurchased})`);
         console.log(`- purchaseDate: ${analysisData.purchaseDate}`);
+        console.log(`- hasImages: ${review.images && review.images.length > 0}`);
         
-        // Re-analyze the review with corrected logic
-        const analysisResult = await analysisService.analyzeReview(analysisData);
+        // Check if review has images and use appropriate analysis method
+        let analysisResult;
+        if (review.images && review.images.length > 0) {
+          console.log(`🖼️ Review has ${review.images.length} images - using image analysis`);
+          try {
+            // For reviews with images, use image analysis - pass URL string, not object
+            analysisResult = await analysisService.analyzeReviewWithImage(analysisData, review.images[0].url);
+          } catch (imageError) {
+            console.warn(`⚠️ Image analysis failed, falling back to text-only:`, imageError.message);
+            // Fallback to text-only analysis if image processing fails
+            analysisResult = await analysisService.analyzeReview(analysisData);
+          }
+        } else {
+          console.log(`📝 Review has no images - using text-only analysis`);
+          // For text-only reviews, use standard analysis
+          analysisResult = await analysisService.analyzeReview(analysisData);
+        }
         
         // Update the review with new analysis
         await Review.findByIdAndUpdate(review._id, {
@@ -103,15 +120,21 @@ export async function POST(request) {
         console.log(`✅ Updated - Classification: ${analysisResult.classification}`);
         console.log(`Flags: ${analysisResult.flags.join(', ')}`);
         console.log(`Purchase verification score: ${analysisResult.scores?.purchaseVerificationScore}`);
+        if (analysisResult.imageAnalysis) {
+          console.log(`🖼️ Image analysis - Product match: ${analysisResult.imageAnalysis.productMatch}`);
+          console.log(`🖼️ Image flags: ${analysisResult.flags.filter(f => f.includes('image')).join(', ') || 'none'}`);
+        }
         
         results.push({
           reviewId: review._id,
           product: review.product.name,
           user: review.user.name,
           hasPurchased,
+          hasImages: review.images && review.images.length > 0,
           classification: analysisResult.classification,
           flags: analysisResult.flags,
-          purchaseVerificationScore: analysisResult.scores?.purchaseVerificationScore
+          purchaseVerificationScore: analysisResult.scores?.purchaseVerificationScore,
+          imageProductMatch: analysisResult.imageAnalysis?.productMatch
         });
         
         analyzed++;

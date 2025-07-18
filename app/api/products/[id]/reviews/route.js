@@ -56,11 +56,19 @@ export async function POST(request, context) {
     const params = await context.params;
     const { id: productId } = params;
     
-    const { rating, comment } = await request.json();
+    const { rating, comment, images } = await request.json();
     
     if (!rating || !comment) {
       return NextResponse.json(
         { error: 'Please provide rating and comment' },
+        { status: 400 }
+      );
+    }
+
+    // Validate images if provided
+    if (images && images.length > 5) {
+      return NextResponse.json(
+        { error: 'Maximum 5 images allowed per review' },
         { status: 400 }
       );
     }
@@ -128,7 +136,9 @@ export async function POST(request, context) {
       user: userId,
       product: productId,
       rating: Number(rating),
-      comment
+      comment,
+      // Add images if provided
+      ...(images && images.length > 0 && { images })
     };
 
     // Initialize ML analysis service
@@ -140,18 +150,43 @@ export async function POST(request, context) {
     console.log('- hasPurchased:', hasPurchased);
     console.log('- purchaseDate:', purchaseDate);
     console.log('- purchaseRecord ID:', purchaseRecord?._id);
+    console.log('- hasImages:', !!(images && images.length > 0));
+    console.log('- imageCount:', images?.length || 0);
     
-    const mlAnalysis = await analysisService.analyzeReview({
-      comment,
-      rating,
-      productName: product.name,
-      productDescription: product.description,
-      productCategory: product.category,
-      productPrice: `₹${product.price}`,
-      hasPurchased: hasPurchased,
-      purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
-      reviewDate: new Date().toISOString()
-    });
+    let mlAnalysis;
+    
+    // Use image analysis if images are provided
+    if (images && images.length > 0) {
+      console.log('🖼️ Using image analysis for review with', images.length, 'images');
+      
+      // For now, we'll analyze with the first image (can be enhanced to analyze multiple)
+      // Convert the first image URL to base64 if needed, or use the URL directly
+      // Note: For this implementation, we'll pass the image URL to the analysis service
+      mlAnalysis = await analysisService.analyzeReviewWithImage({
+        comment,
+        rating,
+        productName: product.name,
+        productDescription: product.description,
+        productCategory: product.category,
+        productPrice: `₹${product.price}`,
+        hasPurchased: hasPurchased,
+        purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
+        reviewDate: new Date().toISOString()
+      }, images[0]?.url); // Pass the first image URL for analysis
+    } else {
+      console.log('📝 Using text-only analysis (no images)');
+      mlAnalysis = await analysisService.analyzeReview({
+        comment,
+        rating,
+        productName: product.name,
+        productDescription: product.description,
+        productCategory: product.category,
+        productPrice: `₹${product.price}`,
+        hasPurchased: hasPurchased,
+        purchaseDate: purchaseDate ? purchaseDate.toISOString() : null,
+        reviewDate: new Date().toISOString()
+      });
+    }
     
     console.log('🤖 AI Analysis Result:');
     console.log('- Classification:', mlAnalysis.classification);

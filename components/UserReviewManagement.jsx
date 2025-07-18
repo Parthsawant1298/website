@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Star, Edit, Trash2, Plus, Calendar, AlertCircle } from "lucide-react"
+import { AlertCircle, Edit, Plus, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function UserReviewManagement() {
   const [reviews, setReviews] = useState([])
@@ -213,6 +213,29 @@ function ReviewCard({ review, onEdit, onDelete, isEditing, onEditSubmit, onCance
             />
           </div>
 
+          {/* Display existing review images in edit mode */}
+          {review.images && review.images.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Review Images
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 bg-gray-50 rounded-lg">
+                {review.images.map((image, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={image.url}
+                      alt={`Review image ${index + 1}`}
+                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Note: Image editing is not yet supported. To change images, please delete and create a new review.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Reason for Edit (Optional)
@@ -286,6 +309,24 @@ function ReviewCard({ review, onEdit, onDelete, isEditing, onEditSubmit, onCance
       </div>
 
       <p className="text-gray-700 mb-4">{review.comment}</p>
+
+      {/* Display review images */}
+      {review.images && review.images.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Review Images:</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {review.images.map((image, index) => (
+              <img
+                key={index}
+                src={image.url}
+                alt={`Review image ${index + 1}`}
+                className="w-full h-24 object-cover rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                onClick={() => window.open(image.url, '_blank')}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {review.isEdited && (
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">

@@ -232,11 +232,30 @@ export async function POST(request) {
 
       for (const review of reviews) {
         try {
-          const analysis = await analysisService.analyzeReview({
+          // Prepare analysis data
+          const analysisData = {
             comment: review.comment,
             rating: review.rating,
             user: review.user
-          });
+          };
+
+          // Check if review has images and use appropriate analysis method
+          let analysis;
+          if (review.images && review.images.length > 0) {
+            console.log(`🖼️ Review ${review._id} has ${review.images.length} images - using image analysis`);
+            try {
+              // For reviews with images, use image analysis - pass URL string, not object
+              analysis = await analysisService.analyzeReviewWithImage(analysisData, review.images[0].url);
+            } catch (imageError) {
+              console.warn(`⚠️ Image analysis failed for review ${review._id}, falling back to text-only:`, imageError.message);
+              // Fallback to text-only analysis if image processing fails
+              analysis = await analysisService.analyzeReview(analysisData);
+            }
+          } else {
+            console.log(`📝 Review ${review._id} has no images - using text-only analysis`);
+            // For text-only reviews, use standard analysis
+            analysis = await analysisService.analyzeReview(analysisData);
+          }
 
           await Review.findByIdAndUpdate(review._id, {
             aiAnalysis: analysis,

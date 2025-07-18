@@ -1,26 +1,25 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import {
-  Star,
-  ShoppingCart,
-  Share,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Heart,
-  Check,
-  Truck,
-  Shield,
-  RefreshCw,
-  Info,
-  Bookmark,
-  MessageCircle,
-  CreditCard,
-  AlertTriangle
+    AlertTriangle,
+    Bookmark,
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    CreditCard,
+    Heart,
+    Info,
+    MessageCircle,
+    RefreshCw,
+    Share,
+    Shield,
+    ShoppingCart,
+    Star,
+    Truck,
+    User
 } from "lucide-react"
-import { use } from "react"
+import { useRouter } from "next/navigation"
+import { use, useEffect, useRef, useState } from "react"
 
 export default function ProductDetailPage({ params }) {
   const router = useRouter()
@@ -49,6 +48,11 @@ export default function ProductDetailPage({ params }) {
   const [reviewSubmitError, setReviewSubmitError] = useState("")
   const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState("")
   const [hasUserReviewed, setHasUserReviewed] = useState(false)
+  
+  // Image upload state
+  const [reviewImages, setReviewImages] = useState([])
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState("")
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -230,6 +234,61 @@ export default function ProductDetailPage({ params }) {
     }, 3000)
   }
 
+  // Handle image upload for reviews
+  const handleImageUpload = async (files) => {
+    if (files.length === 0) return;
+
+    // Validate number of images
+    if (reviewImages.length + files.length > 5) {
+      setImageUploadError("Maximum 5 images allowed per review");
+      return;
+    }
+
+    setIsUploadingImages(true);
+    setImageUploadError("");
+
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`Image ${file.name} is too large. Maximum size is 5MB`);
+        }
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name} is not an image file`);
+        }
+        formData.append('images', file);
+      });
+
+      const response = await fetch('/api/reviews/upload-images', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload images');
+      }
+
+      // Add uploaded images to review images array
+      setReviewImages(prev => [...prev, ...data.images]);
+      showToast(`${data.images.length} image(s) uploaded successfully!`, "success");
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setImageUploadError(error.message);
+      showToast(error.message, "error");
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+  // Remove image from review
+  const removeReviewImage = (index) => {
+    setReviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault()
 
@@ -251,6 +310,7 @@ export default function ProductDetailPage({ params }) {
         body: JSON.stringify({
           rating: reviewForm.rating,
           comment: reviewForm.comment,
+          images: reviewImages, // Include uploaded images
         }),
       })
 
@@ -273,6 +333,7 @@ export default function ProductDetailPage({ params }) {
 
       // Reset form and show success message
       setReviewForm({ rating: 5, comment: "" })
+      setReviewImages([]) // Clear uploaded images
       setReviewSubmitSuccess("Your review has been submitted successfully!")
       setHasUserReviewed(true)
 
@@ -798,6 +859,79 @@ export default function ProductDetailPage({ params }) {
                         ></textarea>
                       </div>
 
+                      {/* Image Upload Section */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Add Photos (Optional)
+                        </label>
+                        <div className="space-y-3">
+                          {/* Upload Area */}
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                            <input
+                              type="file"
+                              id="review-images"
+                              multiple
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e.target.files)}
+                              className="hidden"
+                              disabled={isUploadingImages || reviewImages.length >= 5}
+                            />
+                            <label
+                              htmlFor="review-images"
+                              className={`cursor-pointer ${isUploadingImages || reviewImages.length >= 5 ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <div className="flex flex-col items-center">
+                                <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <p className="text-sm text-gray-600">
+                                  {isUploadingImages ? 'Uploading...' : 'Click to upload images'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Maximum 5 images, 5MB each (JPEG, PNG, WebP)
+                                </p>
+                              </div>
+                            </label>
+                          </div>
+
+                          {/* Image Upload Error */}
+                          {imageUploadError && (
+                            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-md">
+                              {imageUploadError}
+                            </div>
+                          )}
+
+                          {/* Uploaded Images Preview */}
+                          {reviewImages.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {reviewImages.map((image, index) => (
+                                <div key={index} className="relative group">
+                                  <img
+                                    src={image.url}
+                                    alt={`Review image ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeReviewImage(index)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Images Count */}
+                          {reviewImages.length > 0 && (
+                            <p className="text-sm text-gray-600">
+                              {reviewImages.length}/5 images uploaded
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       {reviewSubmitError && (
                         <div className="p-3 mb-4 bg-red-50 text-red-700 text-sm rounded-md">{reviewSubmitError}</div>
                       )}
@@ -906,6 +1040,26 @@ export default function ProductDetailPage({ params }) {
                           </div>
 
                           <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
+                          
+                          {/* Review Images */}
+                          {review.images && review.images.length > 0 && (
+                            <div className="mt-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {review.images.map((image, index) => (
+                                  <img
+                                    key={index}
+                                    src={image.url}
+                                    alt={`Review image ${index + 1}`}
+                                    className="w-full h-24 sm:h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-75 transition-opacity"
+                                    onClick={() => {
+                                      // Optional: Add image lightbox/modal functionality here
+                                      window.open(image.url, '_blank');
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           
                           {/* AI Analysis Info (visible only if flagged or for admins) */}
                           {review.aiAnalysis && review.aiAnalysis.classification === 'suspicious' && (

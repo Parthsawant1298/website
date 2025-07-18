@@ -23,6 +23,31 @@ const reviewSchema = new mongoose.Schema({
     required: [true, 'Please provide a review comment'],
     trim: true
   },
+  // Review Images with validation
+  images: [{
+    url: {
+      type: String,
+      validate: {
+        validator: function(v) {
+          return !v || /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
+        },
+        message: 'Invalid image URL format'
+      }
+    },
+    filename: {
+      type: String,
+      validate: {
+        validator: function(v) {
+          return !v || !/[<>:"/\\|?*]/.test(v); // Prevent path traversal
+        },
+        message: 'Invalid filename characters'
+      }
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   // Edit History Tracking
   editHistory: [{
     previousComment: String,
@@ -101,7 +126,21 @@ const reviewSchema = new mongoose.Schema({
         'emotional_tone_mismatch',
         'product_feature_mismatch',
         'experience_timeline_inconsistent',
-        'unverified_reviewer'
+        'unverified_reviewer',
+        // Image Analysis Flags
+        'image_mismatch',
+        'stock_photo',
+        'low_quality_image',
+        'sentiment_image_mismatch',
+        'promotional_style',
+        'watermark_detected',
+        'image_generic',
+        'image_processing_error',
+        'image_analysis_failed',
+        'image_analysis_error',
+        'json_parse_error',
+        'complete_analysis_failure',
+        'no_purchase_image'
       ]
     }],
     reasoning: String,
@@ -140,27 +179,32 @@ const reviewSchema = new mongoose.Schema({
       sentimentScore: {
         type: Number,
         min: 0,
-        max: 1
+        max: 1,
+        default: 0.5
       },
       authenticityScore: {
         type: Number,
         min: 0,
-        max: 1
+        max: 1,
+        default: 0.5
       },
       productRelevanceScore: {
         type: Number,
         min: 0,
-        max: 1
+        max: 1,
+        default: 0.5
       },
       purchaseVerificationScore: {
         type: Number,
         min: 0,
-        max: 1
+        max: 1,
+        default: 0.5
       },
       overallRiskScore: {
         type: Number,
         min: 0,
-        max: 1
+        max: 1,
+        default: 0.5
       }
     },
     // Enhanced analysis fields
@@ -172,6 +216,43 @@ const reviewSchema = new mongoose.Schema({
       suspiciousPatterns: String,
       timelineAnalysis: String,
       specificConcerns: String
+    },
+    // Image Analysis Fields
+    imageAnalysis: {
+      hasImages: {
+        type: Boolean,
+        default: false
+      },
+      imageCount: {
+        type: Number,
+        default: 0
+      },
+      productMatch: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 0.5
+      },
+      imageQuality: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 0.5
+      },
+      authenticity: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 0.5
+      },
+      sentimentMatch: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 0.5
+      },
+      analysis: String,
+      flags: [String]
     },
     recommendations: {
       action: {
@@ -207,6 +288,30 @@ const reviewSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+// Production-ready index to prevent duplicate reviews
+reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+
+// Pre-save hook to sync old and new score formats for data consistency
+reviewSchema.pre('save', function() {
+  // If new scores format exists, sync to old format for backwards compatibility
+  if (this.aiAnalysis && this.aiAnalysis.scores) {
+    this.aiAnalysis.sentimentScore = this.aiAnalysis.scores.sentimentScore;
+    this.aiAnalysis.authenticityScore = this.aiAnalysis.scores.authenticityScore;
+    this.aiAnalysis.productRelevanceScore = this.aiAnalysis.scores.productRelevanceScore;
+    this.aiAnalysis.purchaseVerificationScore = this.aiAnalysis.scores.purchaseVerificationScore;
+  }
+  // If old format exists but new doesn't, sync to new format
+  else if (this.aiAnalysis && !this.aiAnalysis.scores) {
+    this.aiAnalysis.scores = {
+      sentimentScore: this.aiAnalysis.sentimentScore || 0.5,
+      authenticityScore: this.aiAnalysis.authenticityScore || 0.5,
+      productRelevanceScore: this.aiAnalysis.productRelevanceScore || 0.5,
+      purchaseVerificationScore: this.aiAnalysis.purchaseVerificationScore || 0.5,
+      overallRiskScore: 0.5
+    };
   }
 });
 
@@ -249,5 +354,10 @@ reviewSchema.post('remove', async function() {
   await this.constructor.calculateAverageRating(this.product);
 });
 
-const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
+// Clear any existing model to ensure fresh schema compilation
+if (mongoose.connection.models.Review) {
+  delete mongoose.connection.models.Review;
+}
+
+const Review = mongoose.model('Review', reviewSchema);
 export default Review;
