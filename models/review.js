@@ -359,5 +359,5 @@ if (mongoose.connection.models.Review) {
   delete mongoose.connection.models.Review;
 }
 
-const Review = mongoose.model('Review', reviewSchema);
+const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
 export default Review;

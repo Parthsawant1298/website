@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/order';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   try {

@@ -1,6 +1,7 @@
 // app/api/admin/reviews/route.js
 import connectDB from '@/lib/mongodb';
 import ReviewAnalysisService from '@/lib/reviewAnalysis';
+import Order from '@/models/order';
 import Review from '@/models/review';
 import User from '@/models/user';
 import { cookies } from 'next/headers';
@@ -225,24 +226,83 @@ export async function POST(request) {
           { 'aiAnalysis.classification': 'pending' },
           { aiAnalysis: { $exists: false } }
         ]
-      }).limit(100); // Process in batches
+      })
+      .populate('user', 'name email')
+      .populate('product', 'name description category price')
+      .limit(100); // Process in batches
 
       const analysisService = new ReviewAnalysisService();
       let updatedCount = 0;
 
       for (const review of reviews) {
         try {
-          // Prepare analysis data
+          // Get purchase verification and product details (using same logic as analyze-all-reviews)
+          let hasPurchased = false;
+          let purchaseDetails = null;
+          let product = null;
+
+          // Check if user has purchased this product
+          if (review.user && review.product) {
+            // Use comprehensive purchase verification logic
+            const paidOrders = await Order.find({
+              user: review.user._id,
+              'items.product': review.product._id,
+              paymentStatus: { $in: ['completed', 'paid', 'success'] }
+            }).populate('items.product');
+            
+            const deliveredOrders = await Order.find({
+              user: review.user._id,
+              'items.product': review.product._id,
+              status: 'delivered',
+              paymentStatus: { $in: ['completed', 'paid', 'success'] }
+            }).populate('items.product');
+            
+            const completedOrders = await Order.find({
+              user: review.user._id,
+              'items.product': review.product._id,
+              status: 'completed',
+              paymentStatus: 'completed'
+            }).populate('items.product');
+
+            // Use the most inclusive criteria for purchase verification
+            const validOrders = paidOrders.length > 0 ? paidOrders : 
+                              deliveredOrders.length > 0 ? deliveredOrders : 
+                              completedOrders.length > 0 ? completedOrders : [];
+
+            hasPurchased = validOrders.length > 0;
+            if (hasPurchased) {
+              purchaseDetails = {
+                orderCount: validOrders.length,
+                latestOrder: validOrders[validOrders.length - 1].createdAt,
+                totalSpent: validOrders.reduce((sum, order) => sum + order.total, 0)
+              };
+            }
+
+            // Get product details
+            product = review.product;
+          }
+
+          // Prepare comprehensive analysis data (matching analyze-all-reviews logic)
           const analysisData = {
             comment: review.comment,
             rating: review.rating,
-            user: review.user
+            user: review.user?.name || review.user?.email || 'Anonymous',
+            hasPurchased,
+            purchaseDate: purchaseDetails?.latestOrder,
+            purchaseDetails,
+            productName: product?.name || 'Unknown Product',
+            productDescription: product?.description || 'No description available', 
+            productCategory: product?.category || 'Unknown Category',
+            productPrice: product?.price ? `₹${product.price}` : 'Unknown Price',
+            reviewDate: review.createdAt,
+            reviewId: review._id
           };
 
           // Check if review has images and use appropriate analysis method
           let analysis;
-          if (review.images && review.images.length > 0) {
+          if (review.images && review.images.length > 0 && review.images[0].url) {
             console.log(`🖼️ Review ${review._id} has ${review.images.length} images - using image analysis`);
+            console.log(`🖼️ Image URL: ${review.images[0].url.substring(0, 50)}...`);
             try {
               // For reviews with images, use image analysis - pass URL string, not object
               analysis = await analysisService.analyzeReviewWithImage(analysisData, review.images[0].url);
@@ -252,7 +312,7 @@ export async function POST(request) {
               analysis = await analysisService.analyzeReview(analysisData);
             }
           } else {
-            console.log(`📝 Review ${review._id} has no images - using text-only analysis`);
+            console.log(`📝 Review ${review._id} has no images or invalid image URL - using text-only analysis`);
             // For text-only reviews, use standard analysis
             analysis = await analysisService.analyzeReview(analysisData);
           }

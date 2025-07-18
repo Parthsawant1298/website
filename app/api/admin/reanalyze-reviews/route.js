@@ -95,8 +95,9 @@ export async function POST(request) {
         
         // Check if review has images and use appropriate analysis method
         let analysisResult;
-        if (review.images && review.images.length > 0) {
+        if (review.images && review.images.length > 0 && review.images[0].url) {
           console.log(`🖼️ Review has ${review.images.length} images - using image analysis`);
+          console.log(`🖼️ Image URL: ${review.images[0].url.substring(0, 50)}...`);
           try {
             // For reviews with images, use image analysis - pass URL string, not object
             analysisResult = await analysisService.analyzeReviewWithImage(analysisData, review.images[0].url);
@@ -106,7 +107,7 @@ export async function POST(request) {
             analysisResult = await analysisService.analyzeReview(analysisData);
           }
         } else {
-          console.log(`📝 Review has no images - using text-only analysis`);
+          console.log(`📝 Review has no images or invalid image URL - using text-only analysis`);
           // For text-only reviews, use standard analysis
           analysisResult = await analysisService.analyzeReview(analysisData);
         }
