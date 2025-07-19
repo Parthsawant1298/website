@@ -1,22 +1,22 @@
 "use client"
 
 import {
-    AlertTriangle,
-    Bookmark,
-    Check,
-    ChevronLeft,
-    ChevronRight,
-    CreditCard,
-    Heart,
-    Info,
-    MessageCircle,
-    RefreshCw,
-    Share,
-    Shield,
-    ShoppingCart,
-    Star,
-    Truck,
-    User
+  AlertTriangle,
+  Bookmark,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Heart,
+  Info,
+  MessageCircle,
+  RefreshCw,
+  Share,
+  Shield,
+  ShoppingCart,
+  Star,
+  Truck,
+  User
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { use, useEffect, useRef, useState } from "react"
@@ -375,10 +375,25 @@ export default function ProductDetailPage({ params }) {
 
   // NEW: Get color indicator for review display
   const getReviewIndicator = (review) => {
+    console.log('🔍 DEBUG getReviewIndicator:', {
+      reviewId: review._id,
+      hasAiAnalysis: !!review.aiAnalysis,
+      hasNestedAgentApproval: !!review.aiAnalysis?.agentApproval,
+      hasRootAgentApproval: !!review.agentApproval,
+      nestedDisplayIndicator: review.aiAnalysis?.agentApproval?.displayIndicator,
+      rootDisplayIndicator: review.agentApproval?.displayIndicator,
+      classification: review.aiAnalysis?.classification,
+      userDisplayStatus: review.aiAnalysis?.agentApproval?.userDisplayStatus
+    });
+
     if (!review.aiAnalysis) return { color: 'yellow', status: 'Pending Review', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800', borderColor: 'border-yellow-200' }
     
-    if (review.aiAnalysis.agentApproval) {
-      const indicator = review.aiAnalysis.agentApproval.displayIndicator
+    // Check both nested and root level agentApproval
+    const agentApproval = review.aiAnalysis.agentApproval || review.agentApproval;
+    
+    if (agentApproval) {
+      const indicator = agentApproval.displayIndicator
+      console.log('🎯 Using agentApproval indicator:', indicator, 'from:', review.aiAnalysis.agentApproval ? 'nested' : 'root');
       switch (indicator) {
         case 'green':
           return { color: 'green', status: 'Verified Genuine', bgColor: 'bg-green-50', textColor: 'text-green-800', borderColor: 'border-green-200' }
@@ -390,6 +405,7 @@ export default function ProductDetailPage({ params }) {
       }
     }
     
+    console.log('🔄 Using fallback classification:', review.aiAnalysis.classification);
     // Fallback based on classification
     if (review.aiAnalysis.classification === 'genuine') {
       return { color: 'green', status: 'Verified Genuine', bgColor: 'bg-green-50', textColor: 'text-green-800', borderColor: 'border-green-200' }

@@ -340,11 +340,28 @@ function ReviewCard({ review, onEdit, onDelete, isEditing, onEditSubmit, onCance
           <div className="flex items-center gap-2 text-sm">
             <span className="text-gray-600">AI Analysis:</span>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              review.aiAnalysis.classification === 'genuine' ? 'bg-green-100 text-green-800' :
-              review.aiAnalysis.classification === 'suspicious' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
+              // Check both nested and root level agentApproval (compatibility fix)
+              (() => {
+                const agentApproval = review.aiAnalysis.agentApproval || review.agentApproval;
+                if (agentApproval) {
+                  return agentApproval.displayIndicator === 'green' ? 'bg-green-100 text-green-800' :
+                         agentApproval.displayIndicator === 'red' ? 'bg-red-100 text-red-800' :
+                         'bg-yellow-100 text-yellow-800';
+                } else {
+                  // Fallback to classification if no agentApproval
+                  return review.aiAnalysis.classification === 'genuine' ? 'bg-green-100 text-green-800' :
+                         review.aiAnalysis.classification === 'suspicious' ? 'bg-red-100 text-red-800' :
+                         'bg-yellow-100 text-yellow-800';
+                }
+              })()
             }`}>
-              {review.aiAnalysis.classification}
+              {/* Display the user-friendly status */}
+              {(() => {
+                const agentApproval = review.aiAnalysis.agentApproval || review.agentApproval;
+                return agentApproval ? 
+                  (agentApproval.userDisplayStatus || review.aiAnalysis.classification) : 
+                  review.aiAnalysis.classification;
+              })()}
             </span>
             {review.aiAnalysis.needsManualReview && (
               <span className="flex items-center gap-1 text-amber-600">

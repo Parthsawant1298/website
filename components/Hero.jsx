@@ -1,6 +1,6 @@
 "use client"
-import { useEffect, useState, useRef } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 const SimpleEcommerceBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -116,7 +116,7 @@ const SimpleEcommerceBanner = () => {
             </p>
             
             {/* Button - responsive sizing */}
-            <button className="px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 lg:px-10 lg:py-4 xl:px-12 xl:py-5 bg-white text-gray-800 rounded-full hover:bg-gray-100 transition-colors font-medium text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+            <button className="px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 lg:px-10 lg:py-4 xl:px-12 xl:py-5 bg-white text-gray-800 rounded-full hover:bg-gray-100 font-medium text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
               Shop Now
             </button>
           </div>

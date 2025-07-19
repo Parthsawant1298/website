@@ -172,14 +172,29 @@ export async function POST(request, context) {
     console.log('- Classification:', processedReview.classification);
     console.log('- Agent Decision:', processedReview.agentApproval?.agentDecision);
     console.log('- Display Indicator:', processedReview.agentApproval?.displayIndicator);
+    console.log('🔍 DEBUG: agentApproval nested in processedReview:', !!processedReview.agentApproval);
 
-    // Create review with AI analysis and agent approval
+    // Extract agentApproval to save it as separate field
+    const { agentApproval, ...aiAnalysisData } = processedReview;
+
+    // Create review with AI analysis and agent approval in correct structure
     const review = new Review({
       ...reviewData,
-      aiAnalysis: processedReview,
-      agentApproval: processedReview.agentApproval,
+      aiAnalysis: {
+        ...aiAnalysisData,
+        agentApproval: agentApproval  // Keep it nested for UI compatibility
+      },
+      agentApproval: agentApproval,  // Save as separate field as per schema
       createdAt: new Date()
     });
+
+    // FORCE the nested agentApproval to be set (in case destructuring didn't work)
+    review.aiAnalysis.agentApproval = agentApproval;
+
+    console.log('🔍 DEBUG: review.aiAnalysis.agentApproval before save:', !!review.aiAnalysis.agentApproval);
+    console.log('🔍 DEBUG: review.aiAnalysis.agentApproval.displayIndicator:', review.aiAnalysis.agentApproval?.displayIndicator);
+    console.log('🔍 DEBUG: review.agentApproval before save:', !!review.agentApproval);
+    console.log('🔍 DEBUG: review.agentApproval.displayIndicator:', review.agentApproval?.displayIndicator);
 
     // Save the review
     await review.save();

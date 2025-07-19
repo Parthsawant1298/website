@@ -127,6 +127,7 @@ const reviewSchema = new mongoose.Schema({
         'product_feature_mismatch',
         'experience_timeline_inconsistent',
         'unverified_reviewer',
+        'future_review_date', // NEW: Flag for reviews with future timestamps
         // Image Analysis Flags
         'image_mismatch',
         'stock_photo',

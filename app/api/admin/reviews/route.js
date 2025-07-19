@@ -2,6 +2,7 @@
 import connectDB from '@/lib/mongodb';
 import ReviewAnalysisService from '@/lib/reviewAnalysis';
 import Order from '@/models/order';
+import Product from '@/models/product';
 import Review from '@/models/review';
 import User from '@/models/user';
 import { cookies } from 'next/headers';
@@ -22,6 +23,10 @@ export async function GET(request) {
 
     // Check if user is admin
     await connectDB();
+    
+    // Ensure models are registered (required for populate to work)
+    const productModel = Product;
+    
     const user = await User.findById(userId);
     if (!user || user.role !== 'admin') {
       return NextResponse.json(

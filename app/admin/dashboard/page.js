@@ -1,35 +1,35 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import Link from "next/link"
-import {
-  Package,
-  Plus,
-  ShoppingCart,
-  User,
-  DollarSign,
-  TrendingUp,
-  Calendar,
-  BarChart2,
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  Activity,
-  ArrowUp,
-  Target,
-  Users,
-  Percent,
-  Bell,
-  RefreshCw,
-  ChevronRight,
-  Layers,
-  Settings,
-  XCircle,
-} from "lucide-react"
 import AdminNavbar from "@/components/AdminNavbar"
 import ReviewAnalyticsDashboard from "@/components/ReviewAnalyticsDashboard"
+import {
+    Activity,
+    AlertTriangle,
+    ArrowUp,
+    BarChart2,
+    Bell,
+    Calendar,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    DollarSign,
+    Layers,
+    Package,
+    Percent,
+    Plus,
+    RefreshCw,
+    Settings,
+    ShoppingCart,
+    Target,
+    TrendingUp,
+    User,
+    Users,
+    XCircle,
+} from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -725,7 +725,7 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 gap-2 sm:gap-3">
                   <Link
                     href="/add-product"
-                    className="w-full block text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-colors flex items-center group border border-teal-100"
+                    className="w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-colors flex items-center group border border-teal-100"
                   >
                     <div className="p-1.5 sm:p-2 bg-white rounded-lg mr-2 sm:mr-3 text-teal-600">
                       <Plus size={14} className="sm:hidden" />
@@ -736,7 +736,7 @@ export default function AdminDashboardPage() {
                   </Link>
                   <Link
                     href="/admin/products"
-                    className="w-full block text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition-colors flex items-center group border border-blue-100"
+                    className="w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition-colors flex items-center group border border-blue-100"
                   >
                     <div className="p-1.5 sm:p-2 bg-white rounded-lg mr-2 sm:mr-3 text-blue-600">
                       <Package size={14} className="sm:hidden" />
@@ -759,7 +759,7 @@ export default function AdminDashboardPage() {
                   </button>
                   <Link
                     href="/admin/profile"
-                    className="w-full block text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl transition-colors flex items-center group border border-purple-100"
+                    className="w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl transition-colors flex items-center group border border-purple-100"
                   >
                     <div className="p-1.5 sm:p-2 bg-white rounded-lg mr-2 sm:mr-3 text-purple-600">
                       <User size={14} className="sm:hidden" />
