@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "AI Review Analyzer - Amazon Trust Shield",
+  "version": "1.0.0",
+  "description": "Real-time AI-powered analysis of Amazon reviews to detect fake reviews and provide trust scores",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "notifications",
+    "tabs"
+  ],
+  
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.amazon.in/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.de/*",
+    "*://*.amazon.fr/*",
+    "http://localhost:3000/*",
+    "https://localhost:3000/*",
+    "https://*.vercel.app/*",
+    "https://*.netlify.app/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*/dp/*",
+        "*://*.amazon.com/dp/*",
+        "*://*.amazon.in/*/dp/*",
+        "*://*.amazon.in/dp/*",
+        "*://*.amazon.co.uk/*/dp/*",
+        "*://*.amazon.de/*/dp/*",
+        "*://*.amazon.fr/*/dp/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AI Review Analyzer",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["*://*.amazon.com/*", "*://*.amazon.in/*"]
+    }
+  ],
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

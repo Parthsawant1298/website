@@ -1,0 +1,9 @@
+@echo off
+echo 🚀 Starting Chrome Extension AI Review Analyzer Backend...
+echo.
+cd chrome-extension-server
+echo Installing dependencies...
+call npm install
+echo.
+echo Starting server on port 3001...
+call npm start

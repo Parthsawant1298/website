@@ -1,0 +1,259 @@
+/* styles.css - AI Review Analyzer Chrome Extension */
+
+/* Floating AI Button Animations */
+@keyframes aiPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+  }
+}
+
+@keyframes aiSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes aiSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aiSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Floating AI Button */
+#ai-review-analyzer-btn {
+  animation: aiSlideIn 0.6s ease-out;
+}
+
+#ai-review-analyzer-btn .ai-floating-btn {
+  animation: aiPulse 2s infinite;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#ai-review-analyzer-btn .ai-floating-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+}
+
+#ai-review-analyzer-btn .ai-floating-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Analysis Panel */
+#ai-analysis-panel {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  animation: aiSlideIn 0.4s ease-out;
+}
+
+#ai-analysis-panel .ai-panel {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Custom Scrollbar */
+#ai-analysis-panel *::-webkit-scrollbar {
+  width: 6px;
+}
+
+#ai-analysis-panel *::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#ai-analysis-panel *::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+}
+
+#ai-analysis-panel *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* Button Hover Effects */
+#ai-analyze-btn:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+}
+
+#ai-analyze-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+#ai-analyze-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+
+/* Close Button Hover */
+#ai-close-panel:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: rotate(90deg);
+}
+
+/* Review Cards Animation */
+.ai-review-card {
+  animation: aiSlideUp 0.3s ease-out;
+  transition: all 0.2s ease;
+}
+
+.ai-review-card:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Trust Score Animation */
+.ai-trust-score {
+  animation: aiSlideUp 0.6s ease-out;
+}
+
+/* Loading Spinner */
+.ai-loading-spinner {
+  animation: aiSpin 1s linear infinite;
+}
+
+/* Toast Notifications */
+.ai-toast {
+  animation: aiSlideUp 0.3s ease-out;
+  transition: transform 0.3s ease;
+}
+
+/* Button Group */
+.ai-button-group button {
+  transition: all 0.2s ease;
+  margin: 0 4px;
+}
+
+.ai-button-group button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.ai-button-group button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #ai-analysis-panel .ai-panel {
+    width: 95vw !important;
+    right: 2.5vw !important;
+    max-width: none !important;
+  }
+  
+  #ai-review-analyzer-btn .ai-floating-btn {
+    right: 10px !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  #ai-review-analyzer-btn .ai-floating-btn span {
+    font-size: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #ai-analysis-panel .ai-panel {
+    top: 5% !important;
+    max-height: 90vh !important;
+  }
+  
+  #ai-analysis-content {
+    padding: 15px !important;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  #ai-analysis-panel .ai-panel {
+    background: #1a1a1a !important;
+    border-color: #333 !important;
+    color: #fff !important;
+  }
+  
+  #ai-analysis-panel h3,
+  #ai-analysis-panel h4,
+  #ai-analysis-panel h5 {
+    color: #fff !important;
+  }
+  
+  #ai-analysis-panel p {
+    color: #ccc !important;
+  }
+  
+  .ai-review-card {
+    background: #2a2a2a !important;
+    border-color: #444 !important;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  #ai-review-analyzer-btn,
+  #ai-analysis-panel,
+  .ai-review-card,
+  .ai-trust-score,
+  .ai-toast {
+    animation: none !important;
+  }
+  
+  #ai-review-analyzer-btn .ai-floating-btn {
+    animation: none !important;
+  }
+  
+  * {
+    transition: none !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  #ai-review-analyzer-btn .ai-floating-btn {
+    border: 3px solid #000 !important;
+    background: #0066cc !important;
+  }
+  
+  #ai-analysis-panel .ai-panel {
+    border: 3px solid #000 !important;
+  }
+  
+  .ai-review-card {
+    border: 2px solid #000 !important;
+  }
+}
+
+/* Focus Styles for Accessibility */
+#ai-review-analyzer-btn .ai-floating-btn:focus,
+#ai-close-panel:focus,
+#ai-analyze-btn:focus,
+button:focus {
+  outline: 3px solid #667eea !important;
+  outline-offset: 2px !important;
+}
+
+/* Print Styles */
+@media print {
+  #ai-review-analyzer-btn,
+  #ai-analysis-panel {
+    display: none !important;
+  }
+}
