@@ -46,6 +46,83 @@ const SimpleBarChart = ({ data, title, className = "" }) => {
   )
 }
 
+// Simple Pie Chart component for review authenticity
+const SimplePieChart = ({ data, title, className = "" }) => {
+  const total = data.reduce((sum, item) => sum + item.count, 0)
+  
+  if (total === 0) {
+    return (
+      <div className={`text-center py-6 ${className}`}>
+        <div className="text-gray-400 text-sm">No data available</div>
+      </div>
+    )
+  }
+
+  let cumulativePercentage = 0
+  
+  return (
+    <div className={`space-y-4 ${className}`}>
+      <h4 className="text-sm font-medium text-gray-700 text-center">{title}</h4>
+      
+      {/* Pie Chart */}
+      <div className="flex justify-center">
+        <div className="relative w-48 h-48">
+          <svg width="192" height="192" className="transform -rotate-90">
+            {data.map((item, index) => {
+              const percentage = (item.count / total) * 100
+              const strokeDasharray = `${percentage * 3.77} 377`
+              const strokeDashoffset = -cumulativePercentage * 3.77
+              cumulativePercentage += percentage
+              
+              return (
+                <circle
+                  key={index}
+                  cx="96"
+                  cy="96"
+                  r="60"
+                  fill="transparent"
+                  stroke={item.color}
+                  strokeWidth="24"
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-500"
+                />
+              )
+            })}
+          </svg>
+          
+          {/* Center text */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-800">{total}</div>
+              <div className="text-sm text-gray-500">Total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Legend */}
+      <div className="space-y-2">
+        {data.map((item, index) => (
+          <div key={index} className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div 
+                className="w-3 h-3 rounded-full mr-2"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-sm text-gray-700">{item.name}</span>
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-medium text-gray-800">{item.count}</span>
+              <span className="text-xs text-gray-500 ml-1">({item.percentage}%)</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductDetailPage({ params }) {
   const router = useRouter()
   // Use React.use() to unwrap params
@@ -241,36 +318,45 @@ export default function ProductDetailPage({ params }) {
         analytics.unverifiedUsers++
       }
 
-      // Count AI analysis results - Your AI Agent Logic (Fixed for better detection)
+      // Count AI analysis results - Your AI Agent Logic (Fixed for accurate detection)
       if (review.aiAnalysis) {
-        console.log(`Review ${index + 1} AI Analysis:`, review.aiAnalysis) // Enhanced debug
+        console.log(`Review ${index + 1} AI Analysis:`, {
+          classification: review.aiAnalysis.classification,
+          nestedAgentApproval: review.aiAnalysis.agentApproval,
+          rootAgentApproval: review.agentApproval
+        }) // Enhanced debug
         
-        // Check classification first
-        if (review.aiAnalysis.classification === 'genuine') {
-          analytics.genuine++
-          analytics.greenIndicator++
-        } else if (review.aiAnalysis.classification === 'suspicious') {
-          analytics.suspicious++
-          analytics.redIndicator++
-        } else {
-          // Check agentApproval if classification is unclear
-          if (review.aiAnalysis.agentApproval) {
-            const indicator = review.aiAnalysis.agentApproval.displayIndicator
-            if (indicator === 'green') {
-              analytics.genuine++
-              analytics.greenIndicator++
-            } else if (indicator === 'red') {
-              analytics.suspicious++
-              analytics.redIndicator++
-            } else {
-              // Yellow or pending
-              analytics.suspicious++
-              analytics.redIndicator++
-            }
-          } else {
-            // No clear classification, count as suspicious
+        // Check both nested and root level agentApproval like getReviewIndicator does
+        const agentApproval = review.aiAnalysis.agentApproval || review.agentApproval;
+        
+        if (agentApproval && agentApproval.displayIndicator) {
+          // Use agent approval display indicator for accurate counting
+          const indicator = agentApproval.displayIndicator;
+          console.log(`Review ${index + 1} using agent indicator:`, indicator);
+          
+          if (indicator === 'green') {
+            analytics.genuine++
+            analytics.greenIndicator++
+          } else if (indicator === 'red') {
             analytics.suspicious++
             analytics.redIndicator++
+          } else {
+            // Yellow or pending - count as suspicious for now
+            analytics.suspicious++
+            analytics.yellowIndicator++
+          }
+        } else {
+          // Fallback to classification if no agent approval
+          if (review.aiAnalysis.classification === 'genuine') {
+            analytics.genuine++
+            analytics.greenIndicator++
+          } else if (review.aiAnalysis.classification === 'suspicious') {
+            analytics.suspicious++
+            analytics.redIndicator++
+          } else {
+            // Pending or unknown classification
+            analytics.suspicious++
+            analytics.yellowIndicator++
           }
         }
       } else {
@@ -1266,7 +1352,7 @@ export default function ProductDetailPage({ params }) {
                   </div>
                 )}
 
-                {/* Simplified Bar Graph Only - No Analytics Overview Cards */}
+                {/* Simplified Pie Chart Only - No Analytics Overview Cards */}
                 {!isLoadingAnalytics && productAnalytics && (
                   <div className="mb-8 pb-8 border-b border-gray-200">
                     <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -1282,48 +1368,10 @@ export default function ProductDetailPage({ params }) {
                       </h4>
                       
                       {productAnalytics.chartData?.reviewAuthenticity && productAnalytics.chartData.reviewAuthenticity.length > 0 ? (
-                        <div className="space-y-4">
-                          {productAnalytics.chartData.reviewAuthenticity.map((item, index) => (
-                            <div key={index} className="flex items-center">
-                              <div className="flex items-center w-32">
-                                <div 
-                                  className="w-4 h-4 rounded-full mr-3"
-                                  style={{ backgroundColor: item.color }}
-                                ></div>
-                                <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                              </div>
-                              <div className="flex-1 mx-4">
-                                <div className="bg-gray-200 rounded-full h-6">
-                                  <div
-                                    className="h-6 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
-                                    style={{
-                                      backgroundColor: item.color,
-                                      width: `${Math.max(parseFloat(item.percentage) || 0, 5)}%` // Ensure minimum 5% width
-                                    }}
-                                  >
-                                    <span className="text-white text-xs font-medium">
-                                      {item.percentage}%
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2 w-16">
-                                <span className="text-sm font-bold text-gray-800">{item.count}</span>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {/* Real-time Update Indicator */}
-                          <div className="mt-4 pt-3 border-t border-gray-100">
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>
-                                <AlertTriangle size={12} className="inline mr-1" />
-                                Updates automatically with new reviews
-                              </span>
-                              <span>Total: {productAnalytics.totalReviews} reviews analyzed</span>
-                            </div>
-                          </div>
-                        </div>
+                        <SimplePieChart 
+                          data={productAnalytics.chartData.reviewAuthenticity}
+                          title="Review Analysis Distribution"
+                        />
                       ) : (
                         <div className="text-center py-6 text-gray-500">
                           <Shield size={24} className="mx-auto mb-2 text-gray-300" />
@@ -1333,52 +1381,28 @@ export default function ProductDetailPage({ params }) {
                               : `${productAnalytics.totalReviews} reviews found, AI analysis in progress...`
                             }
                           </p>
-                          {/* Force show basic bar if we have reviews but no chart data */}
+                          {/* Force show basic pie chart if we have reviews but no chart data */}
                           {productAnalytics.totalReviews > 0 && (
-                            <div className="mt-4 space-y-2">
-                              <div className="flex items-center">
-                                <div className="flex items-center w-32">
-                                  <div className="w-4 h-4 rounded-full mr-3 bg-green-500"></div>
-                                  <span className="text-sm font-medium text-gray-700">Genuine Reviews</span>
-                                </div>
-                                <div className="flex-1 mx-4">
-                                  <div className="bg-gray-200 rounded-full h-6">
-                                    <div
-                                      className="h-6 rounded-full bg-green-500 flex items-center justify-end pr-2"
-                                      style={{ width: `${Math.max((productAnalytics.genuine / productAnalytics.totalReviews) * 100, 5)}%` }}
-                                    >
-                                      <span className="text-white text-xs font-medium">
-                                        {((productAnalytics.genuine / productAnalytics.totalReviews) * 100).toFixed(1)}%
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="w-16">
-                                  <span className="text-sm font-bold text-gray-800">{productAnalytics.genuine}</span>
-                                </div>
-                              </div>
-                              <div className="flex items-center">
-                                <div className="flex items-center w-32">
-                                  <div className="w-4 h-4 rounded-full mr-3 bg-red-500"></div>
-                                  <span className="text-sm font-medium text-gray-700">Suspicious Reviews</span>
-                                </div>
-                                <div className="flex-1 mx-4">
-                                  <div className="bg-gray-200 rounded-full h-6">
-                                    <div
-                                      className="h-6 rounded-full bg-red-500 flex items-center justify-end pr-2"
-                                      style={{ width: `${Math.max((productAnalytics.suspicious / productAnalytics.totalReviews) * 100, 5)}%` }}
-                                    >
-                                      <span className="text-white text-xs font-medium">
-                                        {((productAnalytics.suspicious / productAnalytics.totalReviews) * 100).toFixed(1)}%
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="w-16">
-                                  <span className="text-sm font-bold text-gray-800">{productAnalytics.suspicious}</span>
-                                </div>
-                              </div>
-                            </div>
+                            <SimplePieChart 
+                              data={[
+                                {
+                                  name: 'Genuine Reviews',
+                                  count: productAnalytics.genuine || 0,
+                                  percentage: productAnalytics.totalReviews > 0 ? 
+                                    ((productAnalytics.genuine / productAnalytics.totalReviews) * 100).toFixed(1) : '0',
+                                  color: '#10B981'
+                                },
+                                {
+                                  name: 'Suspicious Reviews',
+                                  count: productAnalytics.suspicious || 0,
+                                  percentage: productAnalytics.totalReviews > 0 ? 
+                                    ((productAnalytics.suspicious / productAnalytics.totalReviews) * 100).toFixed(1) : '0',
+                                  color: '#EF4444'
+                                }
+                              ]}
+                              title="Review Analysis Distribution"
+                              className="mt-4"
+                            />
                           )}
                           {/* Debug: Show raw analytics data */}
                           <details className="mt-2 text-xs">

@@ -100,6 +100,13 @@ export default function AdminNavbar() {
             </div>
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
           </Link>
+          <Link href="/admin/turing-test" className="text-gray-100 hover:text-white transition-colors py-2 relative group">
+            <div className="flex items-center">
+              <span className="mr-2">🧪</span>
+              <span>Turing Test</span>
+            </div>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
+          </Link>
           <Link href="/admin/ai-validation-free" className="text-gray-100 hover:text-white transition-colors py-2 relative group">
             <div className="flex items-center">
               <Shield size={18} className="mr-2" />
@@ -208,6 +215,10 @@ export default function AdminNavbar() {
               <Link href="/admin/reviews" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
                 <Star size={18} className="mr-2" />
                 <span>Reviews</span>
+              </Link>
+              <Link href="/admin/turing-test" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
+                <span className="mr-2">🧪</span>
+                <span>Turing Test</span>
               </Link>
               <Link href="/admin/ai-validation-free" className="text-white hover:text-teal-200 transition-colors flex items-center" onClick={closeMenu}>
                 <Shield size={18} className="mr-2" />
